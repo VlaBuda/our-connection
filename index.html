@@ -113,8 +113,14 @@
       <ul class="list" id="ess"></ul>
     </section>
     <section>
-      <div class="row"><h2>Турбота про себе</h2><span class="hint">Тільки твоє, скидається щодня</span></div>
+      <div class="row"><h2>Турбота про себе</h2></div>
+      <p class="hint" id="careHint"></p>
       <ul class="list" id="care"></ul>
+      <form id="careForm" class="inline">
+        <input type="text" id="careText" placeholder="+ своя турбота" autocomplete="off" aria-label="Своя турбота">
+        <select id="careMin" aria-label="З якого рівня сил показувати"><option value="1">З нуля</option><option value="2" selected>Коли трохи є</option><option value="3">Коли норм</option><option value="4">На розгоні</option></select>
+        <button class="btn" type="submit">Додати</button>
+      </form>
     </section>
     <section>
       <div class="row"><h2>Задачі</h2><button class="link" id="toggleAll" type="button"></button></div>

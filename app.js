@@ -6,7 +6,38 @@ const sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey, {
 
 /* ---------- vocab ---------- */
 const ESS=[{k:"water",t:"Вода",did:"+ Відмітити",gap:2.5},{k:"food",t:"Їжа",did:"+ Відмітити",gap:4.5}];
-const CARE=[{k:"move",t:"Встати й потягнутися"},{k:"wash",t:"Вмитися або душ"},{k:"air",t:"Вийти на повітря чи відкрити вікно"},{k:"sleep",t:"Лягти до опівночі"}];
+// Self-care by energy level. Levels add up: each level shows everything from the lower ones.
+// "max" retires an item when a better version takes over (snack -> sandwich -> warm meal).
+const CARE=[
+  {k:"meds",t:"Ліки за розкладом, якщо є",min:1},
+  {k:"snack",t:"Зʼїсти хоч щось, навіть снек",min:1,max:1},
+  {k:"rest1",t:"Пауза: 10 хвилин полежати без телефону й роботи",min:1,max:2},
+  {k:"sandwich",t:"Поїсти щось ситніше: бутерброд, йогурт, каша",min:2,max:2},
+  {k:"teeth",t:"Почистити зуби або вмитися",min:2},
+  {k:"clothes",t:"Переодягнутися в чисте й зручне",min:2},
+  {k:"shower",t:"Душ",min:2},
+  {k:"air",t:"5 хвилин на балконі чи біля відчиненого вікна",min:2},
+  {k:"stretch",t:"Легка розтяжка, 5 хвилин",min:2},
+  {k:"reach",t:"Написати комусь близькому",min:2},
+  {k:"sleep",t:"Поставити телефон на зарядку й лягти до опівночі",min:2},
+  {k:"meal",t:"Нормально поїсти чогось теплого",min:3},
+  {k:"rest3",t:"Перерва 15 хвилин між справами",min:3},
+  {k:"walk",t:"Прогулянка хвилин на 20",min:3},
+  {k:"surface",t:"Прибрати одну поверхню, не всю кімнату",min:3},
+  {k:"joy",t:"30 хвилин на щось просто для задоволення, без провини",min:3},
+  {k:"prep",t:"Приготувати їжу наперед",min:4},
+  {k:"stash",t:"Поставити воду й снек біля ліжка на «нульовий» день",min:4},
+  {k:"stock",t:"Закупити базове: воду, снеки, ліки",min:4},
+  {k:"sport",t:"Рух чи спорт",min:4},
+  {k:"plan",t:"Запланувати відпочинок, щоб після розгону не впасти",min:4},
+];
+const LVL_NAME={1:"з нуля",2:"коли трохи є",3:"коли норм",4:"на розгоні"};
+// Visible care for a level: built-in plus own items. Without a level, show the "трохи є" set.
+function careFor(lvl){
+  const L=lvl||2;
+  const own=[...priv.entries()].filter(([,d])=>d.kind==="care_custom").map(([id,d])=>({k:id,t:d.text,min:d.min||1,own:true}));
+  return [...CARE,...own].filter(c=>L>=c.min&&(!c.max||L<=c.max));
+}
 const NEED=[
   {k:"call",t:"Подзвони, коли зможеш",o:"Чекає дзвінка, коли буде можливість",tip:"Подзвони, щойно буде можливість. Навіть на кілька хвилин."},
   {k:"text",t:"Напиши мені щось",o:"Будь-яке повідомлення зараз допоможе",tip:"Фото, стікер чи дрібниця з дня, неважливо що."},
@@ -305,7 +336,7 @@ function renderState(d){
 function renderCare(d){
   const lvl=d.energy||0,care=careToday(),mig=d.head==="migraine";
   const open=tasks().filter(t=>!t.done).sort((a,b)=>a.w-b.w||a.created-b.created);
-  const careLeft=CARE.filter(c=>!care[c.k]);
+  const careList=careFor(lvl),careLeft=careList.filter(c=>!care[c.k]);
   const now=$("now");now.replaceChildren();const ul=el("ul","list");
   ESS.filter(e=>essDue(e,d)).forEach(e=>ul.append(essEl(e,d,false)));
   let msg="";
@@ -324,7 +355,9 @@ function renderCare(d){
   if(ul.children.length)now.append(ul);else if(lvl||mig)now.append(el("p",null,"Зараз нічого не горить. Можна просто відпочити."));
 
   const es=$("ess");es.replaceChildren();ESS.forEach(e=>es.append(essEl(e,d,true)));
-  const cu=$("care");cu.replaceChildren();CARE.forEach(c=>cu.append(checkEl("care_"+c.k,c.t,!!care[c.k],v=>setCare(c.k,v))));
+  const cu=$("care");cu.replaceChildren();
+  $("careHint").textContent=lvl?"Під рівень «"+ELBL[lvl]+"». Тільки твоє, скидається щодня":"Відміть сили у «Стані», і список підлаштується. Зараз показую рівень «трохи є»";
+  careList.forEach(c=>cu.append(checkEl("care_"+c.k,c.t,!!care[c.k],v=>setCare(c.k,v),null,c.own?()=>delPriv(c.k):null)));
 
   const maxW=mig&&!showAll?0:d.head==="prodrome"&&!showAll?1:(!lvl||showAll)?3:lvl<=2?1:3;
   const visible=open.filter(t=>t.w<=maxW),hidden=open.length-visible.length;
@@ -334,7 +367,7 @@ function renderCare(d){
   else if(!visible.length)tu.append(el("p","empty","Під твій стан зараз нічого немає, і це окей."));
   const tg=$("toggleAll");tg.hidden=!(hidden>0||showAll);tg.textContent=showAll?"Показати лише те, що під силу":"Показати всі ("+hidden+" сховано)";
   const doneToday=tasks().filter(t=>t.done&&t.doneDay===today());
-  const n=CARE.filter(c=>care[c.k]).length+doneToday.length+(d.water||[]).length+(d.food||[]).length;
+  const n=Object.values(care).filter(Boolean).length+doneToday.length+(d.water||[]).length+(d.food||[]).length;
   $("tally").textContent=n?("Сьогодні вже відмічено: "+n+". Все це зараховується."):"Сьогодні ще нічого не відмічено. Нічого страшного.";
   const du=$("doneList");du.replaceChildren();doneToday.forEach(t=>du.append(checkEl("d_"+t.id,t.text,true,toggleTask(t),t.w,()=>delPriv(t.id))));
 }
@@ -537,6 +570,8 @@ $("whyForm").addEventListener("submit",e=>{
   saveMe({whys:[...whysOf(myToday()),{text,ts:Date.now()}]});$("why").value="";flash(e.submitter,"✓ Додано");
 });
 $("toggleAll").addEventListener("click",()=>{showAll=!showAll;render()});
+$("careForm").addEventListener("submit",e=>{e.preventDefault();const text=$("careText").value.trim();if(!text)return;
+  const id="cc"+Date.now().toString(36);putPriv(id,{kind:"care_custom",text,min:+$("careMin").value});$("careText").value="";flash(e.submitter,"✓ Додано")});
 $("add").addEventListener("submit",e=>{e.preventDefault();const text=$("newText").value.trim();if(!text)return;
   const id="t"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   putPriv(id,{kind:"task",text,w:+$("newW").value,created:Date.now(),done:false,doneDay:null});$("newText").value="";$("newW").value="1";flash(e.submitter,"✓ Додано")});

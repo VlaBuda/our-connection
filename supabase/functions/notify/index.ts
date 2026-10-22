@@ -85,6 +85,18 @@ async function tick() {
       await pushTo(uid, { title: "Як ти?", body: "Відміть, скільки зараз сил. Це один дотик.", tag: "checkin" });
       sent++;
     }
+    // Rest reminder: on low-energy days people often keep working anyway.
+    const restEvery = d.energy === 1 ? 90 : d.energy === 2 ? 150 : 0;
+    if (restEvery && hour >= 10 && hour < 21 && (await allow(uid, "rest", restEvery))) {
+      await pushTo(uid, {
+        title: "Пауза",
+        body: d.energy === 1
+          ? "Сил майже немає. 10 хвилин полежати без роботи й телефону теж справа."
+          : "Сил небагато. Зроби перерву хвилин на 10, поки не стало нуль.",
+        tag: "rest",
+      });
+      sent++;
+    }
     const w = lastTs(d.water);
     if ((w ? now - w > 2.5 * 3600_000 : hour >= 10) && (await allow(uid, "water", 150))) {
       await pushTo(uid, { title: "Вода", body: "Давно не було води. Ковток зараз?", tag: "water" });
