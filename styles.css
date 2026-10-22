@@ -239,3 +239,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .emojipop{position:absolute;z-index:50;background:#1b1d18;border:1.5px solid var(--line);border-radius:16px;padding:8px;display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:2px;max-height:240px;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .emo{font-size:1.35rem;border:0;background:transparent;border-radius:10px;padding:6px 0;cursor:pointer}
 .emo:hover{background:rgba(255,255,255,.1)}
+
+/* HD backgrounds on wide screens: fill the whole screen, no side blur. */
+:root[data-bgmode="hd"] body::after{background-size:cover;-webkit-mask-image:none;mask-image:none}

@@ -50,7 +50,10 @@ const SIGNS=[{k:"aura",t:"Аура, мерехтіння"},{k:"light",t:"Ріж�
 const MOOD=[{k:"calm",t:"Спокійно"},{k:"happy",t:"Щасливо"},{k:"joy",t:"Радісно"},{k:"cope",t:"Я справлюсь"},{k:"tired",t:"Втомлено"},{k:"anx",t:"Тривожно"},{k:"scared",t:"Страшно"},{k:"sad",t:"Сумно"},{k:"hurt",t:"Боляче"},{k:"cry",t:"Хочу плакати"},{k:"irr",t:"Все дратує"},{k:"empty",t:"Пусто"}];
 const COLORS=[{k:"red",c:"#d9584a",t:"Червоний"},{k:"yellow",c:"#e8c448",t:"Жовтий"},{k:"blue",c:"#5a96e6",t:"Синій"},{k:"green",c:"#64be78",t:"Зелений"},{k:"violet",c:"#aa78e6",t:"Фіолетовий"}];
 // Themes: background image + accent palette. "pattern" images tile instead of stretching.
-const T=(t,img,o,accent,onAccent,bg,surface,pattern)=>({t,img:"themes/"+img+".jpg",sm:"themes/"+img+"-sm.jpg",o,accent,onAccent,bg,surface,pattern});
+// HD versions (AI-upscaled) exist only for the images listed here.
+const HD_READY=new Set([]);
+const T=(t,img,o,accent,onAccent,bg,surface,pattern)=>({t,img:"themes/"+img+".jpg",hd:HD_READY.has(img)?"themes/"+img+"-hd.jpg":null,sm:"themes/"+img+"-sm.jpg",o,accent,onAccent,bg,surface,pattern});
+const wide=window.matchMedia("(min-width: 900px)");
 const THEMES={
   apothecary:T("Аптека","apothecary",".58","#c9922e","#1b130b","#11140f","rgba(22,24,18,.86)"),
   moon:T("Місяць і квіти","moon",".7","#c9922e","#1b130b","#15100c","rgba(30,23,17,.86)",true),
@@ -111,14 +114,16 @@ const whysOf=d=>[...arr(d.whys),...(d.why&&!arr(d.whys).length?[{text:d.why,ts:d
 function themeLayer(t,dim){const o=dim||t.o;return "linear-gradient(rgba(8,9,10,"+o+"),rgba(8,9,10,"+o+")),url(\""+t.img+"\")"}
 function applyTheme(k){
   const t=THEMES[k]||THEMES.apothecary,r=document.documentElement.style;
-  r.setProperty("--bg-img",'url("'+t.img+'")');r.setProperty("--dim",t.o);
-  document.documentElement.dataset.bgmode=t.pattern?"pattern":"photo";
+  const useHd=t.hd&&wide.matches;
+  r.setProperty("--bg-img",'url("'+(useHd?t.hd:t.img)+'")');r.setProperty("--dim",t.o);
+  document.documentElement.dataset.bgmode=t.pattern?"pattern":useHd?"hd":"photo";
   r.setProperty("--bg",t.bg);r.setProperty("--surface",t.surface);
   r.setProperty("--accent",t.accent);r.setProperty("--on-accent",t.onAccent);
   r.setProperty("--accent-soft",t.accent+"33");
   document.querySelector('meta[name="theme-color"]').content=t.bg;
 }
 const themeKey=()=>myProfile().theme||ls("theme")||"apothecary";
+wide.addEventListener("change",()=>applyTheme(themeKey()));
 applyTheme(ls("theme")||"apothecary");
 
 /* ---------- data ---------- */
