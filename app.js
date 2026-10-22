@@ -282,22 +282,45 @@ function render(){
 /* ---------- push ---------- */
 function b64ToBytes(s){const p="=".repeat((4-s.length%4)%4);const b=atob((s+p).replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from([...b].map(c=>c.charCodeAt(0)))}
 const pushSupported=()=>"serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window;
+function withTimeout(p,ms,what){return Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error(what)),ms))])}
+async function getReg(){
+  let reg=await navigator.serviceWorker.getRegistration();
+  if(!reg)reg=await navigator.serviceWorker.register("sw.js");
+  return withTimeout(navigator.serviceWorker.ready,10000,"сервіс-воркер не запустився");
+}
+let pushBusy=false;
 async function enablePush(){
-  if(!pushSupported()){alertMsg("Цей браузер не підтримує сповіщення. Відкрий додаток у Chrome.");return}
-  const perm=await Notification.requestPermission();
-  if(perm!=="granted"){alertMsg("Сповіщення заблоковані. Їх можна дозволити в налаштуваннях сайту в Chrome.");renderPushState();return}
-  const reg=await navigator.serviceWorker.ready;
-  let sub=await reg.pushManager.getSubscription();
-  if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToBytes(CFG.vapidPublicKey)});
-  const j=sub.toJSON();
-  const {error}=await sb.from("push_subscriptions").upsert({endpoint:j.endpoint,user_id:uid,p256dh:j.keys.p256dh,auth:j.keys.auth});
-  if(error)return syncErr(error);
-  renderPushState();render();
+  if(pushBusy)return;pushBusy=true;
+  const btns=[$("pushOn"),$("pushOn2")];btns.forEach(b=>{b.disabled=true;b.textContent="Вмикаю…"});
+  try{
+    if(!pushSupported())throw new Error("цей браузер не підтримує сповіщення. Відкрий у Chrome");
+    alertMsg("Чекаю дозволу браузера…");
+    const perm=await Notification.requestPermission();
+    if(perm!=="granted")throw new Error(perm==="denied"?"сповіщення заблоковані. Дозволь їх у налаштуваннях сайту (значок замка біля адреси)":"дозвіл не надано");
+    alertMsg("Підключаю сповіщення…");
+    const reg=await getReg();
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub)sub=await withTimeout(reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToBytes(CFG.vapidPublicKey)}),20000,"сервіс сповіщень браузера не відповів");
+    const j=sub.toJSON();
+    const {error}=await sb.from("push_subscriptions").upsert({endpoint:j.endpoint,user_id:uid,p256dh:j.keys.p256dh,auth:j.keys.auth});
+    if(error)throw new Error("не вдалося зберегти: "+error.message);
+    alertMsg("Сповіщення увімкнені");
+    sb.functions.invoke("notify",{body:{type:"test"}}).catch(()=>{});
+  }catch(e){
+    console.error(e);alertMsg("Не вийшло: "+(e&&e.message||e));
+  }finally{
+    pushBusy=false;btns.forEach(b=>{b.disabled=false;b.textContent="Увімкнути сповіщення"});
+    renderPushState();render();
+  }
 }
 function alertMsg(t){$("pushState").textContent=t;$("sync").textContent=t}
-function renderPushState(){
-  const s=!pushSupported()?"Сповіщення недоступні в цьому браузері":Notification.permission==="granted"?"Сповіщення увімкнені":Notification.permission==="denied"?"Сповіщення заблоковані в браузері":"Сповіщення вимкнені";
-  $("pushState").textContent=s;$("pushOn").hidden=!pushSupported()||Notification.permission==="granted";
+async function renderPushState(){
+  if($("pushState").textContent.startsWith("Не вийшло"))return;
+  if(!pushSupported()){$("pushState").textContent="Сповіщення недоступні в цьому браузері";$("pushOn").hidden=true;return}
+  let subscribed=false;
+  try{const reg=await navigator.serviceWorker.getRegistration();subscribed=!!(reg&&await reg.pushManager.getSubscription())}catch(e){}
+  $("pushState").textContent=subscribed&&Notification.permission==="granted"?"Сповіщення увімкнені на цьому пристрої":Notification.permission==="denied"?"Сповіщення заблоковані в браузері":"Сповіщення вимкнені";
+  $("pushOn").hidden=subscribed&&Notification.permission==="granted";
 }
 function renderPushBanner(){$("pushBanner").hidden=!pushSupported()||Notification.permission!=="default"||ls("pushLater")===today()}
 

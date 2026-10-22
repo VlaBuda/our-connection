@@ -139,6 +139,11 @@ Deno.serve(async (req) => {
   const user = auth?.user;
   if (!user) return json({ error: "not signed in" }, 401);
 
+  if (body.type === "test") {
+    await pushTo(user.id, { title: "Запас сил", body: "Сповіщення працюють. Так виглядатимуть нагадування.", tag: "test" });
+    return json({ ok: true });
+  }
+
   const { data: me } = await admin.from("profiles").select("*").eq("id", user.id).single();
   if (!me?.couple_id) return json({ ok: true, note: "no partner yet" });
   const { data: partner } = await admin.from("profiles").select("*")
