@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Запас сил</title>
+<meta name="theme-color" content="#11140f">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,600&family=Manrope:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<main class="screen" id="loading"><div class="panel"><p>Завантажую…</p></div></main>
+
+<main class="screen" id="auth" hidden>
+  <form class="panel" id="authForm">
+    <h1 id="authTitle">Вхід</h1>
+    <p id="authLead">Увійди, щоб бачити одне одного.</p>
+    <div class="field"><label for="email">Пошта</label><input type="text" id="email" inputmode="email" autocomplete="email" required></div>
+    <div class="field"><label for="password">Пароль</label><input type="password" id="password" autocomplete="current-password" minlength="6" required></div>
+    <div id="signupFields" hidden>
+      <div class="field"><label for="name">Як тебе називати</label><input type="text" id="name" autocomplete="nickname" maxlength="30"></div>
+      <div class="field"><label>Твій колір</label><div class="colors" id="colorPick"></div></div>
+    </div>
+    <p class="err" id="authErr" role="alert"></p>
+    <button class="btn" type="submit" id="authSubmit">Увійти</button>
+    <button class="link" type="button" id="authToggle">Я тут вперше</button>
+  </form>
+</main>
+
+<main class="screen" id="pair" hidden>
+  <div class="panel">
+    <h1>Ваша пара</h1>
+    <p>Один з вас створює пару і надсилає код, другий вводить його.</p>
+    <button class="btn" type="button" id="createCouple">Створити пару</button>
+    <div id="codeBox" hidden><p>Надішли цей код своїй людині:</p><div class="code" id="codeShow"></div></div>
+    <div class="divider">або</div>
+    <form id="joinForm" class="field">
+      <label for="joinCode">Код від твоєї людини</label>
+      <input type="text" id="joinCode" maxlength="6" autocomplete="off" style="text-transform:uppercase">
+      <button class="btn" type="submit">Приєднатися</button>
+    </form>
+    <p class="err" id="pairErr" role="alert"></p>
+    <button class="link" type="button" id="skipPair">Поки без пари</button>
+  </div>
+</main>
+
+<div class="wrap" id="app" hidden>
+  <header class="topbar">
+    <div>
+      <p class="date" id="date"></p>
+      <h1>Ми сьогодні</h1>
+      <p class="sync" id="sync">Підключаюсь…</p>
+    </div>
+    <button class="iconbtn" id="openSettings" type="button">Налаштування</button>
+  </header>
+  <div class="panel" id="pushBanner" hidden>
+    <p>Увімкни сповіщення, щоб отримувати нагадування про воду й їжу і знати, коли твоя людина відмітила щось важливе.</p>
+    <div class="row"><button class="btn" id="pushOn2" type="button">Увімкнути сповіщення</button><button class="link" id="pushLater" type="button">Пізніше</button></div>
+  </div>
+
+  <div class="inbox" id="inbox"></div>
+
+  <section aria-label="Ми">
+    <div class="us" id="us"></div>
+  </section>
+
+  <section aria-label="Мій стан">
+    <h2>Як ти зараз?</h2>
+    <p class="sub">Сили</p>
+    <div class="levels">
+      <button class="lvl" data-l="1" aria-pressed="false"><span class="bars"><i></i><i></i><i></i><i></i></span>Майже нуль</button>
+      <button class="lvl" data-l="2" aria-pressed="false"><span class="bars"><i></i><i></i><i></i><i></i></span>Трохи є</button>
+      <button class="lvl" data-l="3" aria-pressed="false"><span class="bars"><i></i><i></i><i></i><i></i></span>Норм</button>
+      <button class="lvl" data-l="4" aria-pressed="false"><span class="bars"><i></i><i></i><i></i><i></i></span>Розгін</button>
+    </div>
+    <p class="sub">Що мені зараз треба</p>
+    <div class="chips" id="needChips"></div>
+    <p class="sub">Сон <span class="opt">можна кілька</span></p>
+    <div class="chips" id="sleepChips"></div>
+    <p class="sub">Голова</p>
+    <div class="chips" id="headChips"></div>
+    <div id="painBox" class="reveal" hidden><p class="sub">Наскільки болить <span class="opt">1 ледь, 10 нестерпно</span></p><div class="chips" id="painChips"></div></div>
+    <div id="signBox" class="reveal" hidden><p class="sub">Що відчуваєш <span class="opt">можна кілька</span></p><div class="chips" id="signChips"></div></div>
+    <p class="sub">Настрій <span class="opt">можна кілька</span></p>
+    <div class="chips" id="moodChips"></div>
+    <p class="sub">Через що, якщо є сили написати</p>
+    <form id="whyForm"><input type="text" id="why" placeholder="Наприклад: не виспалась, багато роботи" autocomplete="off" aria-label="Через що"><button class="btn" type="submit">Зберегти</button></form>
+  </section>
+
+  <section class="now" id="now" aria-live="polite"></section>
+
+  <section>
+    <div class="row"><h2>Вода і їжа</h2><span class="hint">Бачите ви обоє</span></div>
+    <ul class="list" id="ess"></ul>
+  </section>
+
+  <section>
+    <div class="row"><h2>Турбота про себе</h2><span class="hint">Тільки твоє, скидається щодня</span></div>
+    <ul class="list" id="care"></ul>
+  </section>
+
+  <section>
+    <div class="row"><h2>Задачі</h2><button class="link" id="toggleAll" type="button"></button></div>
+    <p class="hint">Бачиш тільки ти</p>
+    <form id="add">
+      <input type="text" id="newText" placeholder="Що треба зробити, одним рядком" autocomplete="off" aria-label="Нова задача">
+      <select id="newW" aria-label="Скільки сил забере"><option value="1">Легка</option><option value="2">Середня</option><option value="3">Важка</option></select>
+      <button class="btn" type="submit">Додати</button>
+    </form>
+    <ul class="list" id="tasks"></ul>
+    <p class="tally" id="tally"></p>
+    <ul class="list" id="doneList"></ul>
+  </section>
+
+  <section>
+    <div class="row"><h2>Для нас</h2><span class="hint">Дрібниці дня, мрії, те, що хочеться обговорити</span></div>
+    <form id="boxForm">
+      <input type="text" id="boxText" placeholder="Що хочеться розповісти чи не забути" autocomplete="off" aria-label="Запис для нас">
+      <select id="boxKind" aria-label="Тип запису"><option value="tell">Розповісти</option><option value="dream">Мрія</option><option value="talk">Обговорити</option></select>
+      <button class="btn" type="submit">Додати</button>
+    </form>
+    <ul class="list" id="box"></ul>
+  </section>
+
+  <section>
+    <div class="row"><h2>Мої останні 7 днів</h2><span class="hint">Щоб бачити звʼязки</span></div>
+    <div class="tablebox"><table id="week"></table></div>
+  </section>
+</div>
+
+<dialog id="settings">
+  <div class="settings">
+    <h2>Налаштування</h2>
+    <div class="field"><label for="setName">Як тебе називати</label><input type="text" id="setName" maxlength="30"></div>
+    <div class="field"><label>Твій колір</label><div class="colors" id="setColor"></div></div>
+    <div class="row"><span id="pushState" class="hint"></span><button class="btn" id="pushOn" type="button">Увімкнути сповіщення</button></div>
+    <div class="field"><label>Пара</label><p class="hint" id="pairInfo"></p></div>
+    <div class="row">
+      <button class="ghost" id="logout" type="button">Вийти</button>
+      <button class="btn" id="closeSettings" type="button">Готово</button>
+    </div>
+  </div>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
