@@ -139,7 +139,16 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
 .panel input,.panel form input[type=text]{flex:none}
 input[type=password]{font:inherit;padding:11px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);min-width:0}
 
-body::before{content:"";position:fixed;inset:0;z-index:-1;background-image:var(--bg-layer);background-size:var(--bg-size,cover);background-repeat:var(--bg-repeat,no-repeat);background-position:center}
+/* Background: a blurred copy fills the screen, the sharp image sits on top at a size that
+   never upscales much (full height on wide screens, cover on phones). Patterns just tile. */
+body::before{content:"";position:fixed;inset:-40px;z-index:-2;background-image:var(--bg-img,url("bg.jpg"));background-size:cover;background-position:center;filter:blur(30px) brightness(calc((1 - var(--dim,.55)) * .75))}
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:var(--bg-img,url("bg.jpg"));
+  background-size:auto 100%;background-repeat:no-repeat;background-position:center;filter:brightness(calc(1 - var(--dim,.55)));
+  -webkit-mask-image:linear-gradient(to right,transparent calc(50% - 29vh),#000 calc(50% - 20vh),#000 calc(50% + 20vh),transparent calc(50% + 29vh));
+  mask-image:linear-gradient(to right,transparent calc(50% - 29vh),#000 calc(50% - 20vh),#000 calc(50% + 20vh),transparent calc(50% + 29vh))}
+@media (max-aspect-ratio:4/5){body::after{background-size:cover;-webkit-mask-image:none;mask-image:none}}
+:root[data-bgmode="pattern"] body::before{filter:brightness(calc(1 - var(--dim,.55)));inset:0;background-size:420px auto;background-repeat:repeat}
+:root[data-bgmode="pattern"] body::after{display:none}
 .field input[type=text],.field input[type=password]{flex:none;width:100%}
 #signupFields{display:flex;flex-direction:column;gap:14px}
 :root{--bg-layer:linear-gradient(rgba(10,12,9,.55),rgba(10,12,9,.62)),url("bg.jpg")}

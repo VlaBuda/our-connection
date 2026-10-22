@@ -111,7 +111,8 @@ const whysOf=d=>[...arr(d.whys),...(d.why&&!arr(d.whys).length?[{text:d.why,ts:d
 function themeLayer(t,dim){const o=dim||t.o;return "linear-gradient(rgba(8,9,10,"+o+"),rgba(8,9,10,"+o+")),url(\""+t.img+"\")"}
 function applyTheme(k){
   const t=THEMES[k]||THEMES.apothecary,r=document.documentElement.style;
-  r.setProperty("--bg-layer",themeLayer(t));r.setProperty("--bg-size",t.pattern?"auto, 520px auto":"cover");r.setProperty("--bg-repeat",t.pattern?"repeat":"no-repeat");
+  r.setProperty("--bg-img",'url("'+t.img+'")');r.setProperty("--dim",t.o);
+  document.documentElement.dataset.bgmode=t.pattern?"pattern":"photo";
   r.setProperty("--bg",t.bg);r.setProperty("--surface",t.surface);
   r.setProperty("--accent",t.accent);r.setProperty("--on-accent",t.onAccent);
   r.setProperty("--accent-soft",t.accent+"33");
