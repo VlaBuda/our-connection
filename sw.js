@@ -1,5 +1,5 @@
 // Service worker: offline shell + push notifications.
-const CACHE = "zapas-v9";
+const CACHE = "zapas-v10";
 const SHELL = ["./", "index.html", "styles.css", "app.js", "config.js", "bg.jpg", "manifest.webmanifest", "icons/icon-192.png"];
 
 self.addEventListener("install", (e) => {
@@ -24,7 +24,7 @@ self.addEventListener("fetch", (e) => {
 self.addEventListener("push", (e) => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch { d = { body: e.data && e.data.text() }; }
-  e.waitUntil(self.registration.showNotification(d.title || "Запас сил", {
+  e.waitUntil(self.registration.showNotification(d.title || "Наш звʼязок", {
     body: d.body || "",
     tag: d.tag,
     renotify: true,

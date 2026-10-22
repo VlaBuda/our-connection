@@ -152,7 +152,7 @@ Deno.serve(async (req) => {
   if (!user) return json({ error: "not signed in" }, 401);
 
   if (body.type === "test") {
-    await pushTo(user.id, { title: "Запас сил", body: "Сповіщення працюють. Так виглядатимуть нагадування.", tag: "test" });
+    await pushTo(user.id, { title: "Наш звʼязок", body: "Сповіщення працюють. Так виглядатимуть нагадування.", tag: "test" });
     return json({ ok: true });
   }
 
