@@ -51,7 +51,7 @@ const MOOD=[{k:"calm",t:"Спокійно"},{k:"happy",t:"Щасливо"},{k:"j
 const COLORS=[{k:"red",c:"#d9584a",t:"Червоний"},{k:"yellow",c:"#e8c448",t:"Жовтий"},{k:"blue",c:"#5a96e6",t:"Синій"},{k:"green",c:"#64be78",t:"Зелений"},{k:"violet",c:"#aa78e6",t:"Фіолетовий"}];
 // Themes: background image + accent palette. "pattern" images tile instead of stretching.
 // HD versions (AI-upscaled) exist only for the images listed here.
-const HD_READY=new Set(["apothecary","red-forest","lilac-forest","star-watercolor","glow-flowers","sakura"]);
+const HD_READY=new Set(["apothecary","red-forest","lilac-forest","star-watercolor","glow-flowers","sakura","cosmos","pink-clouds","night-forest"]);
 const T=(t,img,o,accent,onAccent,bg,surface,pattern)=>({t,img:"themes/"+img+".jpg",hd:HD_READY.has(img)?"themes/"+img+"-hd.jpg":null,sm:"themes/"+img+"-sm.jpg",o,accent,onAccent,bg,surface,pattern});
 const wide=window.matchMedia("(min-width: 900px)");
 const THEMES={
