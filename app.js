@@ -57,7 +57,7 @@ const THEMES={
   redforest:T("Червоний ліс","red-forest",".55","#e0485f","#fff4f4","#11171a","rgba(18,24,27,.86)"),
   lilacforest:T("Бузковий ліс","lilac-forest",".55","#ec9a34","#1d1206","#1a1220","rgba(32,20,40,.86)"),
   stars:T("Зоряна акварель","star-watercolor",".45","#dfba5c","#14110a","#0f1a33","rgba(14,24,50,.86)"),
-  garden:T("Нічний сад","night-garden",".3","#9fbde0","#0c1220","#0b0f17","rgba(14,18,28,.88)",true),
+  garden:T("Квіти-вогники","glow-flowers",".3","#f0a33c","#1c1004","#0a0a0b","rgba(18,16,14,.88)"),
   berries:T("Ягоди","berries",".62","#f28fab","#2a0c18","#3a1424","rgba(44,14,28,.88)",true),
   sakura:T("Сакура","sakura",".45","#f4a3c6","#2a0e1e","#0c1438","rgba(14,20,56,.86)"),
   cosmos:T("Космос","cosmos",".5","#ff5a8e","#24060f","#0b1030","rgba(16,16,44,.86)"),
