@@ -8,7 +8,16 @@ import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import webpush from "npm:web-push@3.6.7";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+// Service key: legacy name first, then the newer "secret keys" JSON.
+function serviceKey(): string {
+  const legacy = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (legacy) return legacy;
+  try {
+    const keys = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}");
+    return keys.default ?? Object.values(keys)[0] as string;
+  } catch { return ""; }
+}
+const SERVICE_KEY = serviceKey();
 const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
 webpush.setVapidDetails(
   "mailto:" + (Deno.env.get("VAPID_CONTACT") ?? "noreply@example.com"),
