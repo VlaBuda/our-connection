@@ -214,3 +214,19 @@ select option{background:#1b1d16;color:var(--ink)}
 dialog{max-height:90vh;overflow:auto}
 .inbox:empty{display:none}
 .boxitem .txt{flex:1 1 220px}
+
+/* ---------- themed cards ---------- */
+.card.themed{background-size:cover;background-position:center}
+.card.themed .fact{background:rgba(0,0,0,.45)}
+.card.themed .fact.alert{background:var(--low-soft)}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23d8cbb4' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
+.themecard{width:auto}
+.themeimg{height:90px}
+
+/* ---------- emoji ---------- */
+.emojibtn{font-size:1.25rem;line-height:1;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:0 12px;cursor:pointer;flex:none;min-height:44px}
+.field .emojibtn{align-self:flex-start}
+.emojipop{position:absolute;z-index:50;background:#1b1d18;border:1.5px solid var(--line);border-radius:16px;padding:8px;display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:2px;max-height:240px;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.emo{font-size:1.35rem;border:0;background:transparent;border-radius:10px;padding:6px 0;cursor:pointer}
+.emo:hover{background:rgba(255,255,255,.1)}

@@ -49,9 +49,22 @@ const HEAD=[{k:"ok",t:"Ок"},{k:"pain",t:"Болить"},{k:"prodrome",t:"На�
 const SIGNS=[{k:"aura",t:"Аура, мерехтіння"},{k:"light",t:"Ріже світло"},{k:"sound",t:"Ріжуть звуки"},{k:"smell",t:"Запахи"},{k:"nausea",t:"Нудить"},{k:"neck",t:"Тягне шию"},{k:"fog",t:"Туман у голові"},{k:"yawn",t:"Позіхання, сонливість"},{k:"crave",t:"Тягне на солодке"}];
 const MOOD=[{k:"calm",t:"Спокійно"},{k:"happy",t:"Щасливо"},{k:"joy",t:"Радісно"},{k:"cope",t:"Я справлюсь"},{k:"tired",t:"Втомлено"},{k:"anx",t:"Тривожно"},{k:"scared",t:"Страшно"},{k:"sad",t:"Сумно"},{k:"hurt",t:"Боляче"},{k:"cry",t:"Хочу плакати"},{k:"irr",t:"Все дратує"},{k:"empty",t:"Пусто"}];
 const COLORS=[{k:"red",c:"#d9584a",t:"Червоний"},{k:"yellow",c:"#e8c448",t:"Жовтий"},{k:"blue",c:"#5a96e6",t:"Синій"},{k:"green",c:"#64be78",t:"Зелений"},{k:"violet",c:"#aa78e6",t:"Фіолетовий"}];
+// Themes: background image + accent palette. "pattern" images tile instead of stretching.
+const T=(t,img,o,accent,onAccent,bg,surface,pattern)=>({t,img:"themes/"+img+".jpg",sm:"themes/"+img+"-sm.jpg",o,accent,onAccent,bg,surface,pattern});
 const THEMES={
-  apothecary:{t:"Аптека",layer:'linear-gradient(rgba(10,12,9,.55),rgba(10,12,9,.62)),url("bg.jpg")',size:"cover",repeat:"no-repeat",bg:"#11140f",surface:"rgba(22,24,18,.86)",preview:"bg.jpg"},
-  moon:{t:"Місяць і квіти",layer:'linear-gradient(rgba(14,10,7,.7),rgba(14,10,7,.7)),url("bg-moon.jpg")',size:"auto, 520px auto",repeat:"repeat",bg:"#15100c",surface:"rgba(30,23,17,.86)",preview:"bg-moon.jpg"},
+  apothecary:T("Аптека","apothecary",".58","#c9922e","#1b130b","#11140f","rgba(22,24,18,.86)"),
+  moon:T("Місяць і квіти","moon",".7","#c9922e","#1b130b","#15100c","rgba(30,23,17,.86)",true),
+  redforest:T("Червоний ліс","red-forest",".55","#e0485f","#fff4f4","#11171a","rgba(18,24,27,.86)"),
+  lilacforest:T("Бузковий ліс","lilac-forest",".55","#ec9a34","#1d1206","#1a1220","rgba(32,20,40,.86)"),
+  stars:T("Зоряна акварель","star-watercolor",".45","#dfba5c","#14110a","#0f1a33","rgba(14,24,50,.86)"),
+  garden:T("Нічний сад","night-garden",".3","#9fbde0","#0c1220","#0b0f17","rgba(14,18,28,.88)",true),
+  berries:T("Ягоди","berries",".62","#f28fab","#2a0c18","#3a1424","rgba(44,14,28,.88)",true),
+  sakura:T("Сакура","sakura",".45","#f4a3c6","#2a0e1e","#0c1438","rgba(14,20,56,.86)"),
+  cosmos:T("Космос","cosmos",".5","#ff5a8e","#24060f","#0b1030","rgba(16,16,44,.86)"),
+  pumpkins:T("Гарбузи","pumpkins",".55","#f0812f","#1c0d03","#0d0b0a","rgba(22,18,16,.88)",true),
+  ferns:T("Папороть і конюшина","ferns",".55","#cf92e6","#1d0d24","#121611","rgba(20,26,20,.88)",true),
+  clouds:T("Рожеві хмари","pink-clouds",".5","#f5a9bb","#2a1018","#1e1420","rgba(36,22,38,.86)"),
+  nightforest:T("Нічний ліс","night-forest",".42","#f2a55c","#1d1006","#0b1420","rgba(14,22,34,.88)"),
 };
 const ELBL={1:"майже нуль",2:"трохи є",3:"норм",4:"розгін"};
 const WLABEL={1:"легка",2:"середня",3:"важка"};
@@ -95,10 +108,13 @@ const colorOf=id=>(profiles.get(id)||{}).color||(id===uid?"red":"yellow");
 const whysOf=d=>[...arr(d.whys),...(d.why&&!arr(d.whys).length?[{text:d.why,ts:d.updated}]:[])];
 
 /* ---------- theme ---------- */
+function themeLayer(t,dim){const o=dim||t.o;return "linear-gradient(rgba(8,9,10,"+o+"),rgba(8,9,10,"+o+")),url(\""+t.img+"\")"}
 function applyTheme(k){
   const t=THEMES[k]||THEMES.apothecary,r=document.documentElement.style;
-  r.setProperty("--bg-layer",t.layer);r.setProperty("--bg-size",t.size);r.setProperty("--bg-repeat",t.repeat);
+  r.setProperty("--bg-layer",themeLayer(t));r.setProperty("--bg-size",t.pattern?"auto, 520px auto":"cover");r.setProperty("--bg-repeat",t.pattern?"repeat":"no-repeat");
   r.setProperty("--bg",t.bg);r.setProperty("--surface",t.surface);
+  r.setProperty("--accent",t.accent);r.setProperty("--on-accent",t.onAccent);
+  r.setProperty("--accent-soft",t.accent+"33");
   document.querySelector('meta[name="theme-color"]').content=t.bg;
 }
 const themeKey=()=>myProfile().theme||ls("theme")||"apothecary";
@@ -231,7 +247,7 @@ function colorRow(box,cur,onPick){
 function themeRow(box,cur,onPick){
   box.replaceChildren();
   Object.entries(THEMES).forEach(([k,t])=>{const b=btn("themecard","",()=>onPick(k),t.t);b.setAttribute("aria-pressed",String(cur===k));
-    const im=el("span","themeimg");im.style.backgroundImage='url("'+t.preview+'")';b.append(im,el("span",null,t.t));box.append(b)});
+    const im=el("span","themeimg");im.style.backgroundImage='url("'+t.sm+'")';b.append(im,el("span",null,t.t));box.append(b)});
 }
 const toggleTask=t=>v=>putPriv(t.id,{kind:"task",text:t.text,w:t.w,created:t.created,done:v,doneDay:v?today():null});
 
@@ -265,6 +281,8 @@ function stateRows(d){
 }
 function personCard(id,d,isMe){
   const c=el("article","card c-"+colorOf(id));
+  const pt=THEMES[(profiles.get(id)||{}).theme];
+  if(pt){c.classList.add("themed");c.style.backgroundImage=themeLayer(pt,".55");c.style.setProperty("--accent",pt.accent);c.style.setProperty("--on-accent",pt.onAccent);c.style.setProperty("--accent-soft",pt.accent+"33")}
   const who=el("div","who");who.append(el("h3",null,nm(id)));
   const isToday=d&&d.date===today();
   who.append(el("small",null,d&&d.updated?(isToday?"оновлено о "+hm(d.updated):"востаннє "+dshort(d.updated)):""));
@@ -578,6 +596,23 @@ $("add").addEventListener("submit",e=>{e.preventDefault();const text=$("newText"
 $("boxForm").addEventListener("submit",async e=>{e.preventDefault();const text=$("boxText").value.trim();const cid=myProfile().couple_id;if(!text||!cid)return;
   $("boxText").value="";flash(e.submitter,"✓ Додано");
   const {error}=await sb.from("box").insert({couple_id:cid,author:uid,text,kind:$("boxKind").value});if(error)return syncErr(error);await loadBox();render()});
+
+/* ---------- emoji ---------- */
+const EMOJI="😊 🥰 😘 🤗 🥺 😢 😭 😔 😩 😴 🤒 🤕 😤 😡 😰 😱 🙃 😌 😅 🤍 ❤️ 🧡 💛 💚 💙 💜 🖤 💔 ❤️‍🩹 💕 🫂 🙏 👍 👌 💪 ✨ 🌙 ⭐ ☀️ 🌧️ ⛈️ 🔥 🌸 🌿 🍂 🎃 🍵 ☕ 🍫 🍕 🥪 💧 💊 🛌 🏠 🔨 💼 📞 💬 🎧 📚 🎮 🐈 🐕".split(" ");
+let emojiFor=null;
+const pop=el("div","emojipop");pop.hidden=true;pop.setAttribute("role","dialog");pop.setAttribute("aria-label","Смайлики");
+EMOJI.forEach(e=>pop.append(btn("emo",e,()=>{if(!emojiFor)return;const i=emojiFor,a=i.selectionStart??i.value.length,b=i.selectionEnd??a;i.setRangeText(e,a,b,"end");i.focus();i.dispatchEvent(new Event("input"))},e)));
+document.body.append(pop);
+function openEmoji(input,anchor){
+  if(!pop.hidden&&emojiFor===input){pop.hidden=true;return}
+  emojiFor=input;pop.hidden=false;
+  const r=anchor.getBoundingClientRect(),w=Math.min(300,window.innerWidth-24);
+  pop.style.width=w+"px";pop.style.left=Math.max(12,Math.min(r.right-w,window.innerWidth-w-12))+"px";
+  const below=r.bottom+8+pop.offsetHeight<window.innerHeight;
+  pop.style.top=(window.scrollY+(below?r.bottom+8:r.top-8-pop.offsetHeight))+"px";
+}
+document.addEventListener("click",e=>{if(!pop.hidden&&!pop.contains(e.target)&&!e.target.classList.contains("emojibtn"))pop.hidden=true});
+["why","newText","boxText","careText"].forEach(id=>{const i=$(id);if(!i)return;const b=btn("emojibtn","☺",ev=>{ev.preventDefault();openEmoji(i,ev.currentTarget)},"Додати смайлик");i.after(b)});
 
 /* ---------- boot ---------- */
 setInterval(render,5*60*1000);
