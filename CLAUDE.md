@@ -23,6 +23,10 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
 - `nudges` (water/food/rest/hug): one per kind per 2h from a sender (RLS `nudge_ok`); never deleted —
   `dismissed_at`, `answered_at` (reply button → partner gets a thank-you), `thanks_seen_at`.
 - `shows` + private Storage bucket `shows` (`<couple_id>/<user_id>/<file>.jpg`): "Хочу тобі показати" photos.
+- `days.data.log` [{ts,k,from,to}]: today's state changes (energy/need/sleep/head/mood/why), shown on cards;
+  "fresh" marks use localStorage `seenLog`. Push "стало краще/важче" compares with localStorage `pushBase`.
+- `plans` ("Наш час": game/watch/call/other, optional `at`, `proposed_by`, `agreed_at`, `done_at`); cron tick
+  sends a reminder to both ~30 min before `at`.
 - Own "що мені треба": `days.data.need = "own"` + `needText`; saved list in `private_items` id `needs_own`.
 
 ## Applying changes
@@ -34,7 +38,7 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
 
 ## UI
 - Tabs: Ми (two cards, partner's advice under each state; "Хочу тобі показати" photo feed) · Стан · Турбота (now, water/food with
-  editable times, self-care by energy level, tasks) · Для нас (with history) · Статистика.
+  editable times, self-care by energy level, tasks) · Наш час (plans, ideas, history) · Для нас (with history) · Статистика.
 - Her colour red, his yellow. 13 themes in `THEMES` (app.js); images in `themes/` with `-sm` previews
   and AI-upscaled `-hd` versions used on screens ≥900px (`HD_READY`).
 - Emoji picker on text inputs.

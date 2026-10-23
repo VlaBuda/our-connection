@@ -63,6 +63,7 @@
     <button type="button" data-tab="us">Ми</button>
     <button type="button" data-tab="state">Стан</button>
     <button type="button" data-tab="care">Турбота</button>
+    <button type="button" data-tab="time">Наш час</button>
     <button type="button" data-tab="box">Для нас</button>
     <button type="button" data-tab="stats">Статистика</button>
   </nav>
@@ -76,6 +77,7 @@
       <div class="row"><button class="btn" id="pushOn2" type="button">Увімкнути сповіщення</button><button class="link" id="pushLater" type="button">Пізніше</button></div>
     </div>
     <div class="us" id="us"></div>
+    <div class="nextplan" id="nextPlan" hidden></div>
     <button class="ghost wide" type="button" data-goto="state">Відмітити свій стан</button>
     <section class="shows" id="showsBox" hidden>
       <div class="row"><h2>Хочу тобі показати</h2><label class="ghost filebtn">📷 Додати фото<input type="file" id="showFile" accept="image/*" hidden></label></div>
@@ -145,6 +147,22 @@
       <p class="tally" id="tally"></p>
       <ul class="list" id="doneList"></ul>
     </section>
+  </div>
+
+  <!-- Наш час -->
+  <div class="tabpane" data-pane="time" hidden>
+    <section>
+      <p class="hint">Спільне на відстані: гра, кіно чи серіал одночасно, довга розмова. Можна з часом, а можна просто як ідею на потім. За пів години до початку прийде нагадування обом.</p>
+      <form id="planForm" class="inline planform">
+        <select id="planKind" aria-label="Що за активність"><option value="game">🎮 Гра</option><option value="watch">🎬 Перегляд</option><option value="call">📞 Розмова</option><option value="other">✨ Інше</option></select>
+        <input type="text" id="planText" maxlength="200" placeholder="Що саме: назва гри, фільму, тема" autocomplete="off" aria-label="Що саме">
+        <input type="datetime-local" id="planAt" aria-label="Коли (можна не вказувати)">
+        <button class="btn" type="submit">Додати</button>
+      </form>
+    </section>
+    <section><h2>Заплановано</h2><ul class="list" id="plansUp"></ul></section>
+    <section><h2>Ідеї на потім</h2><ul class="list" id="plansIdea"></ul></section>
+    <details class="history"><summary>Що вже було разом <span id="planHistCount"></span></summary><ul class="list" id="plansDone"></ul></details>
   </div>
 
   <!-- Для нас -->

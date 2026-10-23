@@ -2,7 +2,8 @@
 //  - {type:"nudge", kind}          from the app: partner presses "нагадати попити" etc.
 //  - {type:"thanks", id}           from the app: I answered my partner's nudge ("Пʼю воду")
 //  - {type:"show", caption}        from the app: I shared a photo in "Хочу тобі показати"
-//  - {type:"state"}                from the app: I marked something my partner should know
+//  - {type:"plan", id, event}      from the app: "Наш час" — new plan, "я за", new time
+//  - {type:"state", dir, changes}  from the app: my state changed (dir = "better" | "worse" | absent)
 //  - {type:"tick"} + x-cron-secret from pg_cron: water / food / check-in reminders
 // Deploy with "Verify JWT" turned OFF; the function checks callers itself.
 
@@ -70,12 +71,48 @@ async function allow(userId: string, kind: string, minutes: number) {
   return true;
 }
 
+// "Наш час": human time in Kyiv — "сьогодні о 20:00", "завтра о 19:30", "пт, 25 жовт. о 20:00".
+const PLAN_ICON: Record<string, string> = { game: "🎮", watch: "🎬", call: "📞", other: "✨" };
+function kyivDate(d: Date) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+}
+function whenText(iso: string | null) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const time = new Intl.DateTimeFormat("uk-UA", { timeZone: TZ, hour: "2-digit", minute: "2-digit" }).format(d);
+  const day = kyivDate(d), today = kyivDate(new Date()), tomorrow = kyivDate(new Date(Date.now() + 864e5));
+  if (day === today) return `сьогодні о ${time}`;
+  if (day === tomorrow) return `завтра о ${time}`;
+  const date = new Intl.DateTimeFormat("uk-UA", { timeZone: TZ, weekday: "short", day: "numeric", month: "short" }).format(d);
+  return `${date} о ${time}`;
+}
+const planLine = (p: Record<string, unknown>) =>
+  `${PLAN_ICON[p.kind as string] ?? "✨"} ${p.title}${p.at ? " · " + whenText(p.at as string) : ""}`;
+
+// Reminder ~30 minutes before a planned "Наш час", to both people. Runs day and night.
+async function planReminders() {
+  const soon = new Date(Date.now() + 40 * 60_000).toISOString();
+  const { data: plans } = await admin.from("plans").select("*")
+    .is("done_at", null).gt("at", new Date().toISOString()).lte("at", soon);
+  let sent = 0;
+  for (const p of plans ?? []) {
+    const { data: people } = await admin.from("profiles").select("id").eq("couple_id", p.couple_id);
+    for (const person of people ?? []) {
+      if (!(await allow(person.id, "plan:" + p.id, 24 * 60))) continue;
+      await pushTo(person.id, { title: "Скоро ваш час", body: planLine(p), tag: "plan-" + p.id });
+      sent++;
+    }
+  }
+  return sent;
+}
+
 const lastTs = (a: unknown) => (Array.isArray(a) && a.length ? Number(a[a.length - 1]) : 0);
 const has = (v: unknown, k: string) => (Array.isArray(v) ? v.includes(k) : v === k);
 
 async function tick() {
   const { date, hour } = kyivNow();
-  if (hour < 9 || hour >= 22) return { skipped: "night" };
+  const plansSent = await planReminders();
+  if (hour < 9 || hour >= 22) return { skipped: "night", plansSent };
   const { data: subs } = await admin.from("push_subscriptions").select("user_id");
   const users = [...new Set((subs ?? []).map((s) => s.user_id))];
   let sent = 0;
@@ -200,13 +237,36 @@ Deno.serve(async (req) => {
     return json({ ok: true });
   }
 
+  if (body.type === "plan") {
+    const { data: p } = await admin.from("plans").select("*").eq("id", String(body.id)).maybeSingle();
+    if (!p || p.couple_id !== me.couple_id) return json({ error: "not found" }, 404);
+    const ev = String(body.event);
+    const text = ev === "agree" ? `Я за! ${planLine(p)}`
+      : ev === "time" ? `Пропонує інший час: ${planLine(p)}`
+      : p.at ? `Пропонує разом: ${planLine(p)}` : `Нова ідея на «Наш час»: ${planLine(p)}`;
+    await pushTo(partner.id, { title: name, body: text, tag: "plan-" + p.id });
+    return json({ ok: true });
+  }
+
   if (body.type === "state") {
     const { date } = kyivNow();
     const { data: row } = await admin.from("days").select("data").eq("user_id", user.id).eq("day", date).maybeSingle();
     const lines = stateLines((row?.data ?? {}) as Record<string, unknown>);
-    if (!lines.length) return json({ ok: true, note: "nothing to send" });
+    const dir = body.dir === "better" || body.dir === "worse" ? body.dir : null;
+    const changes = (Array.isArray(body.changes) ? body.changes : []).map((c) => String(c).slice(0, 80)).slice(0, 5);
+    if (!dir && !lines.length) return json({ ok: true, note: "nothing to send" });
     if (!(await allow(user.id, "state", 3))) return json({ ok: true, note: "too soon" });
-    await pushTo(partner.id, { title: name, body: lines.join(" · "), tag: "state" });
+    if (dir) {
+      const head = dir === "better" ? "стало краще 🌤" : "стало важче";
+      const extra = dir === "worse" ? lines.filter((l) => !changes.some((c) => c.includes(l))) : [];
+      await pushTo(partner.id, {
+        title: `${name}: ${head}`,
+        body: [...changes, ...extra].join(" · ") || lines.join(" · "),
+        tag: "state",
+      });
+    } else {
+      await pushTo(partner.id, { title: name, body: lines.join(" · "), tag: "state" });
+    }
     return json({ ok: true });
   }
 

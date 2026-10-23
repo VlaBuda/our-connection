@@ -80,7 +80,12 @@ const REPLY={water:"💧 Пʼю воду",food:"🍽 Іду їсти",rest:"🌿
 const REPLY_THANKS={water:"Пʼю воду 💧 Дякую, що нагадуєш!",food:"Іду їсти 🍽 Дякую, що нагадуєш!",rest:"Роблю паузу 🌿 Дякую, що нагадуєш!",hug:"І я про тебе думаю 🤍"};
 const NUDGE_GAP=2*3600e3; // one nudge of each kind per 2 hours (also enforced in the database)
 const MSG={1:"Сьогодні режим збереження. Вода, їжа, базова турбота, і все. Задачі почекають, це нормально.",2:"Трохи сил є. Одна-дві легкі речі, і перерва.",3:"Сили є. Можна взятися за щось вагоме, але не за все одразу.",4:"Є розгін. Візьмись за важке, поки воно легко йде. І не пропускай їжу та воду: після підйому часто буває спад."};
-const TITLES={us:"Ми сьогодні",state:"Як ти зараз?",care:"Турбота",box:"Для нас",stats:"Статистика"};
+const TITLES={us:"Ми сьогодні",state:"Як ти зараз?",care:"Турбота",time:"Наш час",box:"Для нас",stats:"Статистика"};
+const PLAN_KIND={game:{i:"🎮",t:"Гра"},watch:{i:"🎬",t:"Перегляд"},call:{i:"📞",t:"Розмова"},other:{i:"✨",t:"Інше"}};
+// State history within a day: what each field reads like, for the log on the cards and in pushes.
+const FNAME={energy:"сили",need:"треба",sleep:"сон",head:"голова",mood:"настрій",why:"причина"};
+const POS_MOOD=["calm","happy","joy","cope"],NEG_MOOD=["tired","anx","scared","sad","hurt","cry","irr","empty"];
+const HEAD_SEV={ok:0,pain:1,prodrome:2,migraine:3};
 
 /* ---------- helpers ---------- */
 const arr=v=>Array.isArray(v)?v:(v?[v]:[]);
@@ -107,6 +112,7 @@ let people=new Map();     // user_id -> today's data
 let days=new Map();       // user_id -> Map(day -> data), last 31 days
 let priv=new Map();       // id -> private data (tasks, care)
 let box=[],inbox=[],thanks=[],sentLast={},editTime=null;
+let plans=[],planEdit=null,seenBase={};
 let shows=[],showLimit=6,urlCache=new Map(),pendingFile=null,pendingUrl=null;
 
 const myProfile=()=>profiles.get(uid)||{};
@@ -134,10 +140,52 @@ applyTheme(ls("theme")||"apothecary");
 /* ---------- data ---------- */
 function myToday(){return me&&me.date===today()?me:{date:today()}}
 const NOTABLE=["need","sleep","head","energy","mood","whys"];
-const notifyState=debounce(()=>sb.functions.invoke("notify",{body:{type:"state"}}).catch(()=>{}),15000);
+function fieldText(k,d){
+  if(k==="energy")return ELBL[d.energy]||"";
+  if(k==="need")return d.need==="own"?(d.needText||""):((find(NEED,d.need)||{}).t||"").toLowerCase();
+  if(k==="sleep")return labels(SLEEP,d.sleep).join(", ").toLowerCase();
+  if(k==="head"){const h=find(HEAD,d.head);return h?h.t.toLowerCase()+((d.head==="pain"||d.head==="migraine")&&d.pain?" "+d.pain+"/10":""):""}
+  if(k==="mood")return labels(MOOD,d.mood).join(", ").toLowerCase();
+  return "";
+}
+const logLine=e=>e.k==="why"?"причина: «"+e.to+"»":FNAME[e.k]+": "+(e.from&&e.to?e.from+" → "+e.to:e.to||"прибрано");
+// Append to today's change log. Quick taps on the same thing within 3 minutes count as one change.
+function withLog(before,after){
+  const log=[...arr(before.log)],now=Date.now();
+  ["energy","need","sleep","head","mood"].forEach(k=>{
+    const from=fieldText(k,before),to=fieldText(k,after);if(from===to)return;
+    const last=log[log.length-1];
+    if(last&&last.k===k&&now-last.ts<180000){if(last.from===to)log.pop();else{last.to=to;last.ts=now}}
+    else log.push({ts:now,k,from,to});
+  });
+  const wb=whysOf(before),wa=whysOf(after);
+  if(wa.length>wb.length)log.push({ts:now,k:"why",to:wa[wa.length-1].text});
+  return log.slice(-40);
+}
+// Better or worse, comparing what the partner last heard about with now.
+function dirOf(a,b){
+  let up=0,down=0;const cmp=(x,y)=>{if(x==null||y==null||x===y)return;if(y>x)up++;else down++};
+  cmp(a.energy||null,b.energy||null);
+  const sev=d=>d.head in HEAD_SEV?HEAD_SEV[d.head]*10+((d.head==="pain"||d.head==="migraine")?(d.pain||0):0):null;
+  const sb2=sev(b),sa=sev(a)??(sb2!=null?0:null);if(sa!=null&&sb2!=null)cmp(-sa,-sb2); // no head marked before = was ok
+  const ms=d=>arr(d.mood).filter(x=>POS_MOOD.includes(x)).length-arr(d.mood).filter(x=>NEG_MOOD.includes(x)).length;
+  if(arr(a.mood).length&&arr(b.mood).length)cmp(ms(a),ms(b));
+  return up&&!down?"better":down&&!up?"worse":null;
+}
+const snap=d=>({energy:d.energy||0,head:d.head||null,pain:d.pain||0,mood:arr(d.mood)});
+const notifyState=debounce(async()=>{
+  const cur=myToday();let base=ls("pushBase");if(!base||base.date!==today())base=null;
+  const dir=base?dirOf(base.d,cur):null;
+  const changes=base?arr(cur.log).filter(e=>e.ts>base.ts).map(logLine):[];
+  let res={};try{res=await sb.functions.invoke("notify",{body:{type:"state",dir,changes}})}catch(e){}
+  if(res&&res.data&&res.data.note==="too soon"){setTimeout(notifyState,180000);return}
+  ls("pushBase",{date:today(),ts:Date.now(),d:snap(cur)});
+},15000);
 async function saveMe(patch){
-  me=Object.assign({},myToday(),patch,{date:today(),updated:Date.now()});
+  const before=myToday();
+  me=Object.assign({},before,patch,{date:today(),updated:Date.now()});
   delete me.why;
+  me.log=withLog(before,me);
   people.set(uid,me);dayMap(uid).set(today(),me);render();
   const {error}=await sb.from("days").upsert({user_id:uid,day:today(),data:me,updated_at:new Date().toISOString()});
   if(error)return syncErr(error);
@@ -190,7 +238,8 @@ async function signShows(){
   const {data}=await sb.storage.from("shows").createSignedUrls(need,6*3600);
   (data||[]).forEach(r=>{if(r.signedUrl)urlCache.set(r.path,{url:r.signedUrl,exp:Date.now()+6*3600e3})});
 }
-async function loadAll(){await Promise.all([loadProfiles(),loadDays(),loadPriv(),loadBox(),loadInbox(),loadShows()]);render()}
+async function loadPlans(){const {data,error}=await sb.from("plans").select("*").order("created_at",{ascending:false}).limit(200);plans=error?[]:(data||[])}
+async function loadAll(){await Promise.all([loadProfiles(),loadDays(),loadPriv(),loadBox(),loadInbox(),loadShows(),loadPlans()]);render()}
 
 function subscribe(){
   if(channel)sb.removeChannel(channel);
@@ -201,12 +250,13 @@ function subscribe(){
     .on("postgres_changes",{event:"*",schema:"public",table:"nudges"},re(loadInbox))
     .on("postgres_changes",{event:"*",schema:"public",table:"profiles"},re(loadProfiles))
     .on("postgres_changes",{event:"*",schema:"public",table:"shows"},re(loadShows))
+    .on("postgres_changes",{event:"*",schema:"public",table:"plans"},re(loadPlans))
     .subscribe(s=>{if(s==="SUBSCRIBED")$("sync").textContent="Синхронізується між вами";else if(s!=="CLOSED")$("sync").textContent="Підключаюсь…"});
 }
 
 /* ---------- tabs ---------- */
 function setTab(t){
-  if(!TITLES[t])t="us";tab=t;ls("tab",t);
+  if(!TITLES[t])t="us";if(t==="us")markSeen();tab=t;ls("tab",t);
   document.querySelectorAll(".tabpane").forEach(p=>p.hidden=p.dataset.pane!==t);
   document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-current",String(b.dataset.tab===t)));
   $("tabTitle").textContent=TITLES[t];
@@ -216,6 +266,9 @@ function setTab(t){
 document.querySelectorAll("#tabs button").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.tab)));
 document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.goto)));
 window.addEventListener("hashchange",()=>setTab(location.hash.slice(1)));
+
+// What on the partner's card is new since I last looked at "Ми".
+function markSeen(){const s=ls("seenLog")||{};seenBase=s;const pid=partnerId();if(pid)ls("seenLog",Object.assign({},s,{[pid]:Date.now()}))}
 
 /* ---------- UI pieces ---------- */
 function checkEl(id,text,checked,onChange,tag,onDel){
@@ -288,17 +341,17 @@ const toggleTask=t=>v=>putPriv(t.id,{kind:"task",text:t.text,w:t.w,created:t.cre
 // Each state row carries its own advice, shown right under it on the partner's card.
 function stateRows(d){
   const rows=[];
-  if(d.energy)rows.push({label:"Сили: "+ELBL[d.energy],alert:d.energy===1,tips:d.energy===1?["Сил майже немає. Не чекай розгорнутих відповідей."]:[]});
+  if(d.energy)rows.push({f:"energy",label:"Сили: "+ELBL[d.energy],alert:d.energy===1,tips:d.energy===1?["Сил майже немає. Не чекай розгорнутих відповідей."]:[]});
   const sl=labels(SLEEP,d.sleep);
-  if(sl.length)rows.push({label:"Сон: "+sl.join(", ").toLowerCase(),alert:has(d.sleep,"nightmares")||has(d.sleep,"dreams"),
+  if(sl.length)rows.push({f:"sleep",label:"Сон: "+sl.join(", ").toLowerCase(),alert:has(d.sleep,"nightmares")||has(d.sleep,"dreams"),
     tips:has(d.sleep,"nightmares")?["Не розпитуй про кошмари, просто будь поруч у повідомленнях."]:has(d.sleep,"dreams")?["Сни виснажують навіть без кошмарів. Будь мʼякшим сьогодні."]:[]});
   const h=find(HEAD,d.head);
   if(h){const t=[];
     if(d.head==="prodrome")t.push("Можна нагадати про воду, їжу й ліки, краще текстом.");
     if(d.head==="migraine")t.push("Краще текст, ніж дзвінок, і без поспіху з відповіддю.");
     if(d.head==="pain"&&(d.pain||0)>=6)t.push("Коротко й тихо, без дзвінків, якщо не просить.");
-    rows.push({label:"Голова: "+h.t.toLowerCase()+((d.head==="pain"||d.head==="migraine")&&d.pain?" "+d.pain+"/10":""),alert:!!h.warn||(d.pain||0)>=6,tips:t});
-    const sg=labels(SIGNS,d.signs);if(sg.length&&(d.head==="prodrome"||d.head==="migraine"))rows.push({label:sg.join(", ").toLowerCase(),alert:true,tips:[]});
+    rows.push({f:"head",label:"Голова: "+h.t.toLowerCase()+((d.head==="pain"||d.head==="migraine")&&d.pain?" "+d.pain+"/10":""),alert:!!h.warn||(d.pain||0)>=6,tips:t});
+    const sg=labels(SIGNS,d.signs);if(sg.length&&(d.head==="prodrome"||d.head==="migraine"))rows.push({f:"head",label:sg.join(", ").toLowerCase(),alert:true,tips:[]});
   }
   const ml=labels(MOOD,d.mood);
   if(ml.length){const t=[];
@@ -307,7 +360,7 @@ function stateRows(d){
     if(has(d.mood,"cry"))t.push("Хочеться плакати: просто побудь поруч, без «не плач» і без порад.");
     if(has(d.mood,"cope"))t.push("Тримається: можна сказати, що пишаєшся.");
     if(has(d.mood,"happy")||has(d.mood,"joy"))t.push("Добрий момент: запитай, що сьогодні порадувало.");
-    rows.push({label:"Настрій: "+ml.join(", ").toLowerCase(),alert:false,tips:t});
+    rows.push({f:"mood",label:"Настрій: "+ml.join(", ").toLowerCase(),alert:false,tips:t});
   }
   ESS.forEach(e=>{const a=d[e.k]||[];rows.push({label:e.t+": "+(a.length?a.length+", востаннє о "+hm(Math.max(...a)):"ще не було"),alert:essDue(e,d),tips:[],ess:e.k})});
   return rows;
@@ -318,19 +371,29 @@ function personCard(id,d,isMe){
   if(pt){c.classList.add("themed");c.style.backgroundImage=themeLayer(pt,".55");c.style.setProperty("--accent",pt.accent);c.style.setProperty("--on-accent",pt.onAccent);c.style.setProperty("--accent-soft",pt.accent+"33")}
   const who=el("div","who");who.append(el("h3",null,nm(id)));
   const isToday=d&&d.date===today();
-  who.append(el("small",null,d&&d.updated?(isToday?"оновлено о "+hm(d.updated):"востаннє "+dshort(d.updated)):""));
-  c.append(who);
+  const seen=isMe?Infinity:(seenBase[id]||0);
+  const fresh=new Set(isToday?arr(d.log).filter(e=>e.ts>seen&&e.to).map(e=>e.k):[]);
+  const sm=el("small",null,d&&d.updated?(isToday?"оновлено о "+hm(d.updated):"востаннє "+dshort(d.updated)):"");
+  if(fresh.size)sm.prepend(el("span","newbadge","є нове"));
+  who.append(sm);c.append(who);
   if(!d||!isToday){c.append(el("p","empty",isMe?"Відміть свій стан у вкладці «Стан», і він зʼявиться тут для вас обох.":"Сьогодні стан ще не відмічено."));if(!isMe)c.append(nudgeRow(id));return c}
   const n=d.need==="own"&&d.needText?{t:d.needText,o:d.needText}:find(NEED,d.need);
-  if(n){const nb=el("div","need",isMe?n.t:n.o);c.append(nb);if(!isMe&&n.tip)c.append(el("p","tip",n.tip))}
+  if(n){const nb=el("div","need"+(fresh.has("need")?" fresh":""),isMe?n.t:n.o);c.append(nb);if(!isMe&&n.tip)c.append(el("p","tip",n.tip))}
   const ws=whysOf(d);
-  if(ws.length){const q=el("ul","whys");ws.forEach(w=>{const li=el("li","why","«"+w.text+"»");if(w.ts)li.append(el("small",null," "+hm(w.ts)));q.append(li)});c.append(q)}
+  if(ws.length){const q=el("ul","whys");ws.forEach(w=>{const li=el("li","why"+(w.ts>seen?" fresh":""),"«"+w.text+"»");if(w.ts)li.append(el("small",null," "+hm(w.ts)));q.append(li)});c.append(q)}
   let chips=null;
   stateRows(d).forEach(r=>{
     const tips=isMe?[]:r.tips;
-    if(tips.length){chips=null;const s=el("div","staterow");s.append(el("span","fact"+(r.alert?" alert":""),r.label));tips.forEach(t=>s.append(el("p","tip",t)));c.append(s)}
-    else{if(!chips){chips=el("div","facts");c.append(chips)}chips.append(el("span","fact"+(r.alert?" alert":""),r.label))}
+    const cls="fact"+(r.alert?" alert":"")+(r.f&&fresh.has(r.f)?" fresh":"");
+    if(tips.length){chips=null;const s=el("div","staterow");s.append(el("span",cls,r.label));tips.forEach(t=>s.append(el("p","tip",t)));c.append(s)}
+    else{if(!chips){chips=el("div","facts");c.append(chips)}chips.append(el("span",cls,r.label))}
   });
+  const log=arr(d.log);
+  if(log.length){
+    const det=el("details","daylog");det.append(el("summary",null,"Як змінювалось сьогодні ("+log.length+")"));
+    const ul=el("ul");[...log].reverse().forEach(e=>{const li=el("li",e.ts>seen?"fresh":null);li.append(el("time",null,hm(e.ts)),el("span",null,logLine(e)));ul.append(li)});
+    det.append(ul);c.append(det);
+  }
   if(!isMe)c.append(nudgeRow(id,d));
   return c;
 }
@@ -392,6 +455,7 @@ function render(){
   if(tab==="state")renderState(d);
   if(tab==="care")renderCare(d);
   if(tab==="box")renderBox();
+  if(tab==="time")renderTime();
   if(tab==="stats")renderStats();
 }
 function renderUs(){
@@ -402,7 +466,79 @@ function renderUs(){
   else{const c=el("article","card c-"+(colorOf(uid)==="yellow"?"red":"yellow"));c.append(el("h3",null,"Твоя людина"));
     c.append(el("p","empty",myProfile().couple_id?"Картка зʼявиться, щойно твоя людина введе код пари.":"Створи пару в налаштуваннях, щоб бачити одне одного."));us.append(c)}
   renderPushBanner();
+  renderNextPlan();
   renderShows();
+}
+
+/* ---------- Наш час ---------- */
+function whenLocal(iso){
+  const d=new Date(iso),t=hm(iso),td=new Date(),tm=new Date();tm.setDate(tm.getDate()+1);
+  if(d.toDateString()===td.toDateString())return "сьогодні о "+t;
+  if(d.toDateString()===tm.toDateString())return "завтра о "+t;
+  return d.toLocaleDateString("uk-UA",{weekday:"short",day:"numeric",month:"short"})+" о "+t;
+}
+const planTitle=p=>(PLAN_KIND[p.kind]||PLAN_KIND.other).i+" "+p.title;
+const needsMyYes=p=>!p.done_at&&!p.agreed_at&&(p.proposed_by||p.author)!==uid;
+const upcoming=()=>plans.filter(p=>p.at&&!p.done_at).sort((a,b)=>new Date(a.at)-new Date(b.at));
+function renderNextPlan(){
+  const b=$("nextPlan");b.replaceChildren();
+  const waiting=plans.filter(needsMyYes);
+  const next=upcoming().find(p=>new Date(p.at)>Date.now()-3600e3);
+  if(!next&&!waiting.length){b.hidden=true;return}
+  b.hidden=false;
+  if(next){const r=el("div","nprow");r.append(el("span",null,"Наступне разом: "+planTitle(next)+" · "+whenLocal(next.at)+(next.agreed_at?" ✓":"")));b.append(r)}
+  if(waiting.length){const r=el("div","nprow");r.append(el("span","hint",nm(waiting[0].proposed_by||waiting[0].author)+" чекає на твоє «я за»: "+planTitle(waiting[0])+(waiting.length>1?" і ще "+(waiting.length-1):"")));b.append(r)}
+  b.append(btn("link","Відкрити «Наш час»",()=>setTab("time")));
+}
+const toLocalInput=iso=>{const d=new Date(iso);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)};
+async function updPlan(p,patch,event){
+  Object.assign(p,patch);render();
+  const {error}=await sb.from("plans").update(patch).eq("id",p.id);
+  if(error){syncErr(error);await loadPlans();render();return}
+  saved();if(event)sb.functions.invoke("notify",{body:{type:"plan",id:p.id,event}}).catch(()=>{});
+}
+function planItem(p){
+  const li=el("li","item plan"+(p.done_at?" isdone":""));
+  const tx=el("div","txt");const inner=el("div",null,planTitle(p));
+  const past=p.at&&new Date(p.at)<Date.now();
+  const meta=[];
+  if(p.at)meta.push((past&&!p.done_at?"минуло · ":"")+whenLocal(p.at));
+  meta.push((p.author===uid?"ти":nm(p.author))+" · "+dshort(p.created_at));
+  if(p.done_at)meta.push("було "+dshort(p.done_at));
+  else if(p.agreed_at)meta.push("ви обоє за ✓");
+  else meta.push((p.proposed_by||p.author)===uid?"чекає відповіді":"чекає твого «я за»");
+  inner.append(el("small",null,meta.join(" · ")));tx.append(inner);li.append(tx);
+  const acts=el("div","planacts");
+  if(p.done_at){
+    acts.append(btn("ghost sm","Повернути",()=>updPlan(p,{done_at:null})));
+  }else if(planEdit===p.id){
+    const inp=el("input","timein");inp.type="datetime-local";inp.value=p.at?toLocalInput(p.at):"";inp.setAttribute("aria-label","Коли");
+    acts.append(inp,btn("btn sm","Зберегти",()=>{if(!inp.value)return;planEdit=null;
+      updPlan(p,{at:new Date(inp.value).toISOString(),proposed_by:uid,agreed_at:null,agreed_by:null},"time")}),
+      btn("link","Скасувати",()=>{planEdit=null;render()}));
+    setTimeout(()=>inp.focus(),0);
+  }else{
+    if(needsMyYes(p))acts.append(btn("donebtn sm","✓ Я за",()=>updPlan(p,{agreed_at:new Date().toISOString(),agreed_by:uid},"agree")));
+    acts.append(btn("ghost sm",p.at?"Інший час":"Запланувати",()=>{planEdit=p.id;render()}));
+    acts.append(btn("ghost sm","Було ✓",()=>updPlan(p,{done_at:new Date().toISOString()})));
+  }
+  li.append(acts);
+  li.append(btn("del","×",async()=>{if(!confirm("Прибрати «"+p.title+"»?"))return;plans=plans.filter(x=>x.id!==p.id);render();
+    const {error}=await sb.from("plans").delete().eq("id",p.id);if(error)syncErr(error)},"Прибрати"));
+  return li;
+}
+function renderTime(){
+  const has=!!myProfile().couple_id;
+  const up=$("plansUp"),id=$("plansIdea"),hx=$("plansDone");[up,id,hx].forEach(x=>x.replaceChildren());
+  if(!has){up.append(el("p","empty","«Наш час» зʼявиться, коли ви зʼєднаєте пару."));return}
+  const u=upcoming(),ideas=plans.filter(p=>!p.at&&!p.done_at),done=plans.filter(p=>p.done_at).sort((a,b)=>new Date(b.done_at)-new Date(a.done_at));
+  u.forEach(p=>up.append(planItem(p)));
+  if(!u.length)up.append(el("p","empty","Поки нічого не заплановано. Додай ідею з часом або без."));
+  ideas.forEach(p=>id.append(planItem(p)));
+  if(!ideas.length)id.append(el("p","empty","Сюди падає те, що хочеться колись: фільм, гра, довга розмова."));
+  done.forEach(p=>hx.append(planItem(p)));
+  $("planHistCount").textContent=done.length?"("+done.length+")":"";
+  if(!done.length)hx.append(el("p","empty","Тут збиратиметься все, що ви вже робили разом."));
 }
 const when=ts=>new Date(ts).toDateString()===new Date().toDateString()?"сьогодні о "+hm(ts):dshort(ts)+" о "+hm(ts);
 function renderShows(){
@@ -711,6 +847,14 @@ $("whyForm").addEventListener("submit",e=>{
 $("toggleAll").addEventListener("click",()=>{showAll=!showAll;render()});
 $("needForm").addEventListener("submit",e=>{e.preventDefault();const text=$("needText").value.trim();if(!text)return;
   $("needText").value="";$("needForm").hidden=true;saveOwnNeed(text);saveMe({need:"own",needText:text})});
+$("planForm").addEventListener("submit",async e=>{
+  e.preventDefault();const title=$("planText").value.trim(),cid=myProfile().couple_id;if(!title||!cid)return;
+  const when=$("planAt").value;const row={couple_id:cid,author:uid,proposed_by:uid,kind:$("planKind").value,title,at:when?new Date(when).toISOString():null};
+  $("planText").value="";$("planAt").value="";flash(e.submitter,"✓ Додано");
+  const {data,error}=await sb.from("plans").insert(row).select().single();if(error)return syncErr(error);
+  sb.functions.invoke("notify",{body:{type:"plan",id:data.id,event:"new"}}).catch(()=>{});
+  await loadPlans();render();
+});
 $("needCancel").addEventListener("click",()=>{$("needText").value="";$("needForm").hidden=true;render()});
 $("showFile").addEventListener("change",async e=>{
   const f=e.target.files&&e.target.files[0];e.target.value="";if(!f)return;
@@ -761,11 +905,15 @@ function openEmoji(input,anchor){
   pop.style.top=(window.scrollY+(below?r.bottom+8:r.top-8-pop.offsetHeight))+"px";
 }
 document.addEventListener("click",e=>{if(!pop.hidden&&!pop.contains(e.target)&&!e.target.classList.contains("emojibtn"))pop.hidden=true});
-["why","newText","boxText","careText","needText","showCaption"].forEach(id=>{const i=$(id);if(!i)return;const b=btn("emojibtn","☺",ev=>{ev.preventDefault();openEmoji(i,ev.currentTarget)},"Додати смайлик");i.after(b)});
+["why","newText","boxText","careText","needText","showCaption","planText"].forEach(id=>{const i=$(id);if(!i)return;const b=btn("emojibtn","☺",ev=>{ev.preventDefault();openEmoji(i,ev.currentTarget)},"Додати смайлик");i.after(b)});
 
 /* ---------- boot ---------- */
 setInterval(render,5*60*1000);
-document.addEventListener("visibilitychange",()=>{if(!document.hidden&&uid&&!$("app").hidden)loadAll()});
+document.addEventListener("visibilitychange",()=>{
+  const pid=partnerId();
+  if(document.hidden){if(tab==="us"&&pid)ls("seenLog",Object.assign({},ls("seenLog")||{},{[pid]:Date.now()}));return}
+  if(uid&&!$("app").hidden){if(tab==="us")markSeen();loadAll()}
+});
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 setAuthMode(false);
 let started=false;
