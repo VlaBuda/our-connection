@@ -58,10 +58,12 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
 
 ## UI
 - Tabs: Ми (two cards, partner's advice under each state; "Хочу тобі показати" photo feed) · Стан · Турбота (now, water/food with
-  editable times, self-care by energy level, tasks) · Наш час (plans, ideas, history) · Для нас (with history) · Статистика.
+  editable times, self-care by energy level, meds, tasks) · Цикл (only when enabled) · Наш час (plans, ideas, history) · Для нас (with history) · Статистика.
 - Her colour red, his yellow. 13 themes in `THEMES` (app.js); images in `themes/` with `-sm` previews
   and AI-upscaled `-hd` versions used on screens ≥900px (`HD_READY`).
 - Emoji picker on text inputs.
+- Collapsible blocks: `<details class="fold" data-fold="key">`, open state per device in localStorage `folds`; collapsed
+  summary text comes from `renderSums()`. On phones tabs show emoji icons (`data-ico`).
 - Settings dialog has tabs (Про мене · Вигляд · Сповіщення · Пара); theme picker is a dropdown with previews.
 
 ## Ideas not done yet

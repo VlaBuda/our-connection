@@ -86,7 +86,7 @@ const REPLY={water:"💧 Пʼю воду",food:"🍽 Іду їсти",rest:"🌿
 const REPLY_THANKS={water:"Пʼю воду 💧 Дякую, що нагадуєш!",food:"Іду їсти 🍽 Дякую, що нагадуєш!",rest:"Роблю паузу 🌿 Дякую, що нагадуєш!",embrace:"Дякую за обійми 🤍 Стало трохи тепліше",hug:"І я про тебе думаю 🤍"};
 const NUDGE_GAP=2*3600e3; // one nudge of each kind per 2 hours (also enforced in the database)
 const MSG={1:"Сьогодні режим збереження. Вода, їжа, базова турбота, і все. Задачі почекають, це нормально.",2:"Трохи сил є. Одна-дві легкі речі, і перерва.",3:"Сили є. Можна взятися за щось вагоме, але не за все одразу.",4:"Є розгін. Візьмись за важке, поки воно легко йде. І не пропускай їжу та воду: після підйому часто буває спад."};
-const TITLES={us:"Ми сьогодні",state:"Як ти зараз?",care:"Турбота",time:"Наш час",box:"Для нас",stats:"Статистика"};
+const TITLES={us:"Ми сьогодні",state:"Як ти зараз?",care:"Турбота",cycle:"Цикл",time:"Наш час",box:"Для нас",stats:"Статистика"};
 // "Що я зараз роблю". Two sets; each person picks theirs in settings. tip = advice on the partner's card.
 const STATUS={
   civil:[
@@ -391,7 +391,8 @@ async function loadDays(){
   const mine=people.get(uid);
   if(mine&&(!me.updated||me.date!==today()||mine.updated>=me.updated))me=mine;
 }
-async function loadPriv(){const {data}=await sb.from("private_items").select("id,data");priv=new Map((data||[]).map(r=>[r.id,r.data]))}
+let privLoaded=false;
+async function loadPriv(){const {data}=await sb.from("private_items").select("id,data");priv=new Map((data||[]).map(r=>[r.id,r.data]));privLoaded=true}
 async function loadBox(){const {data}=await sb.from("box").select("*").order("created_at",{ascending:false}).limit(300);box=data||[]}
 // Nudges of the last 3 days: ones I received (inbox), thank-yous for ones I sent, and when I last sent each kind.
 async function loadInbox(){
@@ -718,6 +719,9 @@ function render(){
   if(tab==="care")renderCare(d);
   if(tab==="box")renderBox();
   if(tab==="time")renderTime();
+  const cyOn=cycCfg().enabled;$("cycTab").hidden=!cyOn;
+  if(tab==="cycle"){if(cyOn)renderCycle();else if(privLoaded){setTab("us");return}}
+  renderSums(d);
   if(tab==="stats")renderStats();
 }
 function renderUs(){
@@ -847,7 +851,7 @@ function closeShowForm(){if(pendingUrl)URL.revokeObjectURL(pendingUrl);$("showFo
 function renderState(d){
   const lvl=d.energy||0;
   document.querySelectorAll(".lvl").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.l===lvl)));
-  statusRow();emoMap(d);nsRow();retroRow();renderCycle();
+  statusRow();emoMap(d);nsRow();retroRow();
   needRow(d);multiRow($("sleepChips"),SLEEP,"sleep",["good"]);chipRow($("headChips"),HEAD,"head");multiRow($("moodChips"),MOOD,"mood");
   const showPain=d.head==="pain"||d.head==="migraine",showSigns=d.head==="prodrome"||d.head==="migraine";
   $("painBox").hidden=!showPain;if(showPain)scaleRow($("painChips"),"pain");
@@ -1377,6 +1381,28 @@ function renderMeds(){
   $("medHint").hidden=!medsList().some(m=>/залізо|желез|iron|fer/i.test(m.name));
 }
 
+/* ---------- collapsible blocks ---------- */
+// Each <details class="fold" data-fold="key"> remembers open/closed per device; the summary shows a short status.
+document.querySelectorAll("details.fold").forEach(d=>{
+  const f=ls("folds")||{};if(f[d.dataset.fold]===false)d.open=false;else if(f[d.dataset.fold]===true)d.open=true;
+  d.addEventListener("toggle",()=>{const x=ls("folds")||{};x[d.dataset.fold]=d.open;ls("folds",x)});
+});
+function setSum(k,t){const e=document.querySelector('[data-sum="'+k+'"]');if(e)e.textContent=t||""}
+function renderSums(d){
+  const p=myProfile(),st=statusInfo(p);setSum("status",st?st.i+" "+st.t:"не вказано");
+  const ns=nsOf(uid),eps=activeEpisodes(uid);
+  setSum("ns",[...ns.long.map(longLabel),...eps.map(e=>"⚡ "+epInfo(e.k).t.toLowerCase())].join(", ")||"нічого не відмічено");
+  setSum("why",whysOf(d).length?String(whysOf(d).length):"");
+  setSum("ess","вода "+arr(d.water).length+" · їжа "+arr(d.food).length);
+  const care=careToday(),cl=careFor(d.energy||0);setSum("care",cl.filter(c=>care[c.k]).length+" з "+cl.length);
+  const ml=medsList(),mt=medTicks();setSum("meds",ml.length?ml.filter(m=>mt[m.id]).length+" з "+ml.length:"");
+  const open=tasks().filter(t=>!t.done).length;setSum("tasks",open?open+" відкритих":"");
+  setSum("shows",shows.length?String(shows.length):"");
+  const cd=cycDay(today());
+  setSum("cyctoday",[cd.flow&&cd.flow!=="none"?(find(FLOW,cd.flow)||{}).t:"",cd.clots?"згустки":"",cd.pain?"біль":"",cd.libido&&cd.libido!=="normal"?(find(LIBIDO,cd.libido)||{}).t:""].filter(Boolean).join(", ").toLowerCase()||"нічого не відмічено");
+  setSum("cycsym",arr(cd.sym).length?String(arr(cd.sym).length):"");
+}
+
 /* ---------- push ---------- */
 function b64ToBytes(s){const p="=".repeat((4-s.length%4)%4);const b=atob((s+p).replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from([...b].map(c=>c.charCodeAt(0)))}
 const pushSupported=()=>"serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window;
@@ -1494,7 +1520,7 @@ function renderSettings(){
   const cy=$("setCycle");cy.replaceChildren();const cfg=cycCfg();
   const en=el("label","retropriv");const ecb=el("input");ecb.type="checkbox";ecb.checked=!!cfg.enabled;
   ecb.addEventListener("change",async()=>{await putPriv("cycle",Object.assign(cycCfg(),{enabled:ecb.checked}));syncCycle();renderSettings()});
-  en.append(ecb,el("span",null,"Відстежувати цикл (зʼявиться блок у «Стані»)"));cy.append(en);
+  en.append(ecb,el("span",null,"Відстежувати цикл (зʼявиться вкладка «Цикл» 🩸)"));cy.append(en);
   if(cfg.enabled){
     cy.append(el("p","sub","Що бачить "+(partnerId()?nm(partnerId()):"партнер")));
     CSHARE.forEach(([k,t])=>{const l=el("label","retropriv");const c=el("input");c.type="checkbox";c.checked=!!cfg.share[k];

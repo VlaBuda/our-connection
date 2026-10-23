@@ -60,12 +60,13 @@
   </header>
 
   <nav class="tabs" id="tabs" aria-label="Розділи">
-    <button type="button" data-tab="us">Ми</button>
-    <button type="button" data-tab="state">Стан</button>
-    <button type="button" data-tab="care">Турбота</button>
-    <button type="button" data-tab="time">Наш час</button>
-    <button type="button" data-tab="box">Для нас</button>
-    <button type="button" data-tab="stats">Статистика</button>
+    <button type="button" data-tab="us" data-ico="🫶">Ми</button>
+    <button type="button" data-tab="state" data-ico="🌡">Стан</button>
+    <button type="button" data-tab="care" data-ico="🍵">Турбота</button>
+    <button type="button" data-tab="cycle" data-ico="🩸" id="cycTab" hidden>Цикл</button>
+    <button type="button" data-tab="time" data-ico="🎮">Наш час</button>
+    <button type="button" data-tab="box" data-ico="💌">Для нас</button>
+    <button type="button" data-tab="stats" data-ico="📊">Статистика</button>
   </nav>
 
   <div class="inbox" id="inbox"></div>
@@ -80,23 +81,23 @@
     <div class="nextplan" id="nextPlan" hidden></div>
     <button class="ghost wide" type="button" data-goto="state">Відмітити свій стан</button>
     <section class="shows" id="showsBox" hidden>
-      <div class="row"><h2>Хочу тобі показати</h2><label class="ghost filebtn">📷 Додати фото<input type="file" id="showFile" accept="image/*" hidden></label></div>
+      <details class="fold" data-fold="shows" open><summary><h2 class="foldt">Хочу тобі показати</h2><span class="foldsum" data-sum="shows"></span></summary><div class="foldbody"><div class="row"><label class="ghost filebtn">📷 Додати фото<input type="file" id="showFile" accept="image/*" hidden></label></div>
       <form id="showForm" class="showform" hidden>
         <img id="showPreview" alt="Вибране фото">
         <input type="text" id="showCaption" maxlength="500" placeholder="Підпис: що тут і як ти" autocomplete="off" aria-label="Підпис до фото">
         <div class="row"><button class="ghost" type="button" id="showCancel">Скасувати</button><button class="btn" type="submit" id="showSubmit">Показати</button></div>
       </form>
       <div class="showgrid" id="shows"></div>
-      <button class="link" id="showMore" type="button" hidden>Показати ще</button>
+      <button class="link" id="showMore" type="button" hidden>Показати ще</button></div></details>
     </section>
   </div>
 
   <!-- Стан -->
   <div class="tabpane" data-pane="state" hidden>
     <section aria-label="Мій стан">
-      <p class="sub">Що я зараз роблю <span class="opt">видно, доки не зміниш</span></p>
+      <details class="fold" data-fold="status" open><summary><span class="foldt"><span class="sub">Що я зараз роблю</span></span><span class="foldsum" data-sum="status"></span></summary><div class="foldbody"><p class="hint">Видно, доки не зміниш.</p>
       <div class="chips" id="statusChips"></div>
-      <form id="statusForm" class="inline" hidden><input type="text" id="statusText" maxlength="60" placeholder="Своїми словами" autocomplete="off" aria-label="Свій статус"><button class="btn" type="submit">Додати</button><button class="link" type="button" id="statusCancel">Скасувати</button></form>
+      <form id="statusForm" class="inline" hidden><input type="text" id="statusText" maxlength="60" placeholder="Своїми словами" autocomplete="off" aria-label="Свій статус"><button class="btn" type="submit">Додати</button><button class="link" type="button" id="statusCancel">Скасувати</button></form></div></details>
       <p class="sub">Сили</p>
       <div class="levels">
         <button class="lvl" data-l="1" aria-pressed="false"><span class="bars"><i></i><i></i><i></i><i></i></span>Майже нуль</button>
@@ -124,21 +125,7 @@
         <div class="emowords" id="emoWords"></div>
         <p class="emoinfo" id="emoInfo" aria-live="polite"></p>
       </div>
-      <div class="cycbox" id="cycBox" hidden>
-        <p class="sub">Цикл <span class="opt">тільки твоє, партнер бачить те, що ти дозволиш у налаштуваннях</span></p>
-        <div class="cychead" id="cycHead"></div>
-        <p class="sub small">Виділення</p><div class="chips" id="cycFlow"></div>
-        <p class="sub small">Біль</p><div class="chips" id="cycPain"></div>
-        <p class="sub small">Лібідо</p><div class="chips" id="cycLibido"></div>
-        <p class="sub small">Самопочуття <span class="opt">можна кілька</span></p><div class="chips" id="cycSym"></div>
-        <details class="history"><summary>Дати місячних <span id="cycCount"></span></summary>
-          <form id="cycAdd" class="inline"><input type="date" id="cycDate" aria-label="Дата початку місячних"><button class="btn" type="submit">Додати початок</button></form>
-          <ul class="list" id="cycStarts"></ul>
-        </details>
-      </div>
-      <div class="nsbox">
-        <p class="sub">Нервова система</p>
-        <p class="hint">Тривалий стан видно, доки не знімеш. Епізод відмічай, коли стався: партнер бачитиме його і час відновлення після нього.</p>
+      <div class="nsbox"><details class="fold" data-fold="ns" open><summary><span class="foldt"><span class="sub">Нервова система</span></span><span class="foldsum" data-sum="ns"></span></summary><div class="foldbody">        <p class="hint">Тривалий стан видно, доки не знімеш. Епізод відмічай, коли стався: партнер бачитиме його і час відновлення після нього.</p>
         <p class="sub small">Тривалий стан</p>
         <div class="chips" id="nsLong"></div>
         <form id="nsForm" class="inline" hidden><input type="text" id="nsText" maxlength="60" placeholder="Своїми словами" autocomplete="off" aria-label="Свій тривалий стан"><button class="btn" type="submit">Додати</button><button class="link" type="button" id="nsCancel">Скасувати</button></form>
@@ -147,10 +134,10 @@
         <ul class="list" id="nsActive"></ul>
         <div id="retroDue"></div>
         <details class="history"><summary>Епізоди і розбори <span id="epHistCount"></span></summary><ul class="list" id="epHist"></ul></details>
-      </div>
-      <p class="sub">Через що <span class="opt">можна кілька, кожну окремо</span></p>
+      </div></details></div>
+      <details class="fold" data-fold="why" open><summary><span class="foldt"><span class="sub">Через що</span></span><span class="foldsum" data-sum="why"></span></summary><div class="foldbody"><p class="hint">Можна кілька, кожну окремо.</p>
       <form id="whyForm" class="inline"><input type="text" id="why" placeholder="Наприклад: не виспалась, багато роботи" autocomplete="off" aria-label="Причина"><button class="btn" type="submit">Додати</button></form>
-      <ul class="list" id="whyList"></ul>
+      <ul class="list" id="whyList"></ul></div></details>
     </section>
   </div>
 
@@ -158,28 +145,27 @@
   <div class="tabpane" data-pane="care" hidden>
     <section class="now" id="now" aria-live="polite"></section>
     <section>
-      <div class="row"><h2>Вода і їжа</h2><span class="hint">Бачите ви обоє. Час можна виправити</span></div>
-      <ul class="list" id="ess"></ul>
+<details class="fold" data-fold="ess" open><summary><h2 class="foldt">Вода і їжа</h2><span class="foldsum" data-sum="ess"></span></summary><div class="foldbody"><p class="hint">Бачите ви обоє. Час можна виправити.</p><ul class="list" id="ess"></ul></div></details>
     </section>
     <section>
-      <div class="row"><h2>Турбота про себе</h2></div>
-      <p class="hint" id="careHint"></p>
+<details class="fold" data-fold="care" open><summary><h2 class="foldt">Турбота про себе</h2><span class="foldsum" data-sum="care"></span></summary><div class="foldbody">      <p class="hint" id="careHint"></p>
       <ul class="list" id="care"></ul>
       <form id="careForm" class="inline">
         <input type="text" id="careText" placeholder="+ своя турбота" autocomplete="off" aria-label="Своя турбота">
         <select id="careMin" aria-label="З якого рівня сил показувати"><option value="1">З нуля</option><option value="2" selected>Коли трохи є</option><option value="3">Коли норм</option><option value="4">На розгоні</option></select>
         <button class="btn" type="submit">Додати</button>
       </form>
+</div></details>
     </section>
     <section>
-      <div class="row"><h2>Ліки й вітаміни</h2></div>
-      <p class="hint">Бачиш тільки ти. У вказаний час прийде нагадування. Назву можна писати як завгодно: її видно в сповіщенні.</p>
+<details class="fold" data-fold="meds" open><summary><h2 class="foldt">Ліки й вітаміни</h2><span class="foldsum" data-sum="meds"></span></summary><div class="foldbody">      <p class="hint">Бачиш тільки ти. У вказаний час прийде нагадування. Назву можна писати як завгодно: її видно в сповіщенні.</p>
       <ul class="list" id="meds"></ul>
       <p class="hint" id="medHint" hidden>Якщо лікар не казав інакше: залізо зазвичай краще засвоюється окремо від чаю, кави й молочного.</p>
       <form id="medForm" class="inline"><input type="text" id="medName" maxlength="40" placeholder="Назва: залізо, D3, омега…" autocomplete="off" aria-label="Назва"><input type="time" id="medTime" aria-label="Час"><button class="btn" type="submit">Додати</button></form>
+</div></details>
     </section>
     <section>
-      <div class="row"><h2>Задачі</h2><button class="link" id="toggleAll" type="button"></button></div>
+<details class="fold" data-fold="tasks" open><summary><h2 class="foldt">Задачі</h2><span class="foldsum" data-sum="tasks"></span></summary><div class="foldbody"><div class="row"><span></span><button class="link" id="toggleAll" type="button"></button></div>
       <p class="hint">Бачиш тільки ти</p>
       <form id="add" class="inline">
         <input type="text" id="newText" placeholder="Що треба зробити, одним рядком" autocomplete="off" aria-label="Нова задача">
@@ -189,6 +175,25 @@
       <ul class="list" id="tasks"></ul>
       <p class="tally" id="tally"></p>
       <ul class="list" id="doneList"></ul>
+</div></details>
+    </section>
+  </div>
+
+  <!-- Цикл -->
+  <div class="tabpane" data-pane="cycle" hidden>
+    <section class="cycbox" id="cycBox">
+      <p class="hint">Тільки твоє. Партнер бачить лише те, що ти дозволиш у налаштуваннях → «Цикл».</p>
+        <div class="cychead" id="cycHead"></div>
+      <details class="fold" data-fold="cyctoday" open><summary><h2 class="foldt">Сьогодні</h2><span class="foldsum" data-sum="cyctoday"></span></summary><div class="foldbody">        <p class="sub small">Виділення</p><div class="chips" id="cycFlow"></div>
+        <p class="sub small">Біль</p><div class="chips" id="cycPain"></div>
+        <p class="sub small">Лібідо</p><div class="chips" id="cycLibido"></div>
+</div></details>
+      <details class="fold" data-fold="cycsym" open><summary><h2 class="foldt">Самопочуття</h2><span class="foldsum" data-sum="cycsym"></span></summary><div class="foldbody"><p class="hint">Можна кілька.</p><div class="chips" id="cycSym"></div>
+</div></details>
+      <details class="fold" data-fold="cycdates" ><summary><h2 class="foldt">Дати місячних <span id="cycCount"></span></h2><span class="foldsum" data-sum="cycdates"></span></summary><div class="foldbody">
+          <form id="cycAdd" class="inline"><input type="date" id="cycDate" aria-label="Дата початку місячних"><button class="btn" type="submit">Додати початок</button></form>
+          <ul class="list" id="cycStarts"></ul>
+        </div></details>
     </section>
   </div>
 

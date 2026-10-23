@@ -401,3 +401,22 @@ dialog.setdlg{max-width:min(720px,calc(100vw - 24px));width:100%;min-height:min(
 .cycpat{background:rgba(192,72,90,.2);border-radius:10px;padding:8px 10px;font-size:.92rem}
 input[type=date],input[type=time]{font:inherit;padding:10px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);color-scheme:dark}
 .item.due{box-shadow:inset 3px 0 0 var(--accent)}
+
+/* ---------- collapsible blocks ---------- */
+details.fold>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:2px 0}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary::after{content:"▾";margin-left:auto;color:var(--muted);transition:transform .15s}
+details.fold:not([open])>summary::after{transform:rotate(-90deg)}
+details.fold>summary .sub{margin:0}
+.foldt{margin:0}
+.foldsum{color:var(--muted);font-size:.82rem;min-width:0}
+details.fold[open] .foldsum{display:none}
+.foldbody{display:flex;flex-direction:column;gap:12px;padding-top:10px}
+details.fold:not([open]){opacity:.9}
+.cycbox{border-left:0;padding-left:0}
+
+/* tab icons on phones */
+@media (max-width:700px){
+  .tabs button{font-size:.62rem;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.2}
+  .tabs button::before{content:attr(data-ico);font-size:1.15rem;line-height:1}
+}
