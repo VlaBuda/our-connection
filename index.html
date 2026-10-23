@@ -77,6 +77,16 @@
     </div>
     <div class="us" id="us"></div>
     <button class="ghost wide" type="button" data-goto="state">Відмітити свій стан</button>
+    <section class="shows" id="showsBox" hidden>
+      <div class="row"><h2>Хочу тобі показати</h2><label class="ghost filebtn">📷 Додати фото<input type="file" id="showFile" accept="image/*" hidden></label></div>
+      <form id="showForm" class="showform" hidden>
+        <img id="showPreview" alt="Вибране фото">
+        <input type="text" id="showCaption" maxlength="500" placeholder="Підпис: що тут і як ти" autocomplete="off" aria-label="Підпис до фото">
+        <div class="row"><button class="ghost" type="button" id="showCancel">Скасувати</button><button class="btn" type="submit" id="showSubmit">Показати</button></div>
+      </form>
+      <div class="showgrid" id="shows"></div>
+      <button class="link" id="showMore" type="button" hidden>Показати ще</button>
+    </section>
   </div>
 
   <!-- Стан -->
@@ -91,6 +101,7 @@
       </div>
       <p class="sub">Що мені зараз треба</p>
       <div class="chips" id="needChips"></div>
+      <form id="needForm" class="inline" hidden><input type="text" id="needText" maxlength="120" placeholder="Що тобі зараз треба, своїми словами" autocomplete="off" aria-label="Своє «що мені зараз треба»"><button class="btn" type="submit">Додати</button><button class="link" type="button" id="needCancel">Скасувати</button></form>
       <p class="sub">Сон <span class="opt">можна кілька</span></p>
       <div class="chips" id="sleepChips"></div>
       <p class="sub">Голова</p>
@@ -177,6 +188,12 @@
       <button class="btn" id="closeSettings" type="button">Готово</button>
     </div>
   </div>
+</dialog>
+
+<dialog id="photoView" class="photoview">
+  <img id="photoBig" alt="">
+  <p id="photoCap"></p>
+  <div class="row"><small class="hint" id="photoMeta"></small><button class="btn" id="photoClose" type="button">Закрити</button></div>
 </dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>

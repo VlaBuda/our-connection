@@ -1,5 +1,7 @@
 // Edge function "notify": sends push notifications.
 //  - {type:"nudge", kind}          from the app: partner presses "нагадати попити" etc.
+//  - {type:"thanks", id}           from the app: I answered my partner's nudge ("Пʼю воду")
+//  - {type:"show", caption}        from the app: I shared a photo in "Хочу тобі показати"
 //  - {type:"state"}                from the app: I marked something my partner should know
 //  - {type:"tick"} + x-cron-secret from pg_cron: water / food / check-in reminders
 // Deploy with "Verify JWT" turned OFF; the function checks callers itself.
@@ -114,7 +116,15 @@ async function tick() {
 const NUDGE_TEXT: Record<string, string> = {
   water: "нагадує тобі попити води",
   food: "нагадує тобі поїсти",
+  rest: "нагадує тобі відпочити",
   hug: "думає про тебе",
+};
+// What the partner sees after a nudge was answered. Same words as in app.js (REPLY_THANKS).
+const THANKS: Record<string, string> = {
+  water: "Пʼю воду 💧 Дякую, що нагадуєш!",
+  food: "Іду їсти 🍽 Дякую, що нагадуєш!",
+  rest: "Роблю паузу 🌿 Дякую, що нагадуєш!",
+  hug: "І я про тебе думаю 🤍",
 };
 const NEED_TEXT: Record<string, string> = {
   call: "чекає дзвінка, коли зможеш",
@@ -126,7 +136,8 @@ const NEED_TEXT: Record<string, string> = {
 
 function stateLines(d: Record<string, unknown>) {
   const lines: string[] = [];
-  if (d.need && NEED_TEXT[d.need as string]) lines.push(NEED_TEXT[d.need as string]);
+  if (d.need === "own" && d.needText) lines.push(`просить: «${String(d.needText).slice(0, 120)}»`);
+  else if (d.need && NEED_TEXT[d.need as string]) lines.push(NEED_TEXT[d.need as string]);
   if (has(d.sleep, "nightmares")) lines.push("були кошмари");
   if (d.head === "migraine") lines.push("мігрень");
   else if (d.head === "prodrome") lines.push("наближається мігрень");
@@ -166,7 +177,26 @@ Deno.serve(async (req) => {
   if (body.type === "nudge") {
     const kind = String(body.kind);
     if (!NUDGE_TEXT[kind]) return json({ error: "bad kind" }, 400);
+    if (!(await allow(user.id, "nudge:" + kind, 115))) return json({ ok: true, note: "too soon" });
     await pushTo(partner.id, { title: name, body: `${name} ${NUDGE_TEXT[kind]}`, tag: "nudge-" + kind });
+    return json({ ok: true });
+  }
+
+  if (body.type === "thanks") {
+    const { data: n } = await admin.from("nudges").select("*").eq("id", String(body.id)).maybeSingle();
+    if (!n || n.to_user !== user.id || !n.answered_at) return json({ error: "not found" }, 404);
+    await pushTo(n.from_user, { title: name, body: THANKS[n.kind] ?? "Дякую!", tag: "thanks-" + n.kind });
+    return json({ ok: true });
+  }
+
+  if (body.type === "show") {
+    if (!(await allow(user.id, "show", 1))) return json({ ok: true, note: "too soon" });
+    const caption = String(body.caption ?? "").trim().slice(0, 120);
+    await pushTo(partner.id, {
+      title: name,
+      body: caption ? `Хоче тобі показати: ${caption}` : "Хоче тобі щось показати 📷",
+      tag: "show",
+    });
     return json({ ok: true });
   }
 

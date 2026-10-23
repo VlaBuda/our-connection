@@ -73,8 +73,12 @@ const ELBL={1:"майже нуль",2:"трохи є",3:"норм",4:"розгі
 const WLABEL={1:"легка",2:"середня",3:"важка"};
 const KIND={tell:"розповісти",dream:"мрія",talk:"обговорити"};
 const DONE={tell:"Розказано",dream:"Здійснено",talk:"Обговорено"};
-const NUDGE={water:"Нагадати попити",food:"Нагадати поїсти",hug:"Думаю про тебе"};
-const NUDGE_IN={water:"нагадує тобі попити води",food:"нагадує тобі поїсти",hug:"думає про тебе"};
+const NUDGE={water:"Нагадати попити",food:"Нагадати поїсти",rest:"Нагадати відпочити",hug:"Думаю про тебе"};
+const NUDGE_IN={water:"нагадує тобі попити води",food:"нагадує тобі поїсти",rest:"нагадує тобі відпочити",hug:"думає про тебе"};
+// Reply button on a nudge I received, and the thank-you my partner then sees (same words in notify/index.ts).
+const REPLY={water:"💧 Пʼю воду",food:"🍽 Іду їсти",rest:"🌿 Роблю паузу",hug:"🤍 І я про тебе"};
+const REPLY_THANKS={water:"Пʼю воду 💧 Дякую, що нагадуєш!",food:"Іду їсти 🍽 Дякую, що нагадуєш!",rest:"Роблю паузу 🌿 Дякую, що нагадуєш!",hug:"І я про тебе думаю 🤍"};
+const NUDGE_GAP=2*3600e3; // one nudge of each kind per 2 hours (also enforced in the database)
 const MSG={1:"Сьогодні режим збереження. Вода, їжа, базова турбота, і все. Задачі почекають, це нормально.",2:"Трохи сил є. Одна-дві легкі речі, і перерва.",3:"Сили є. Можна взятися за щось вагоме, але не за все одразу.",4:"Є розгін. Візьмись за важке, поки воно легко йде. І не пропускай їжу та воду: після підйому часто буває спад."};
 const TITLES={us:"Ми сьогодні",state:"Як ти зараз?",care:"Турбота",box:"Для нас",stats:"Статистика"};
 
@@ -102,7 +106,8 @@ let me={};                // my shared data for today
 let people=new Map();     // user_id -> today's data
 let days=new Map();       // user_id -> Map(day -> data), last 31 days
 let priv=new Map();       // id -> private data (tasks, care)
-let box=[],inbox=[],sentNudge={},editTime=null;
+let box=[],inbox=[],thanks=[],sentLast={},editTime=null;
+let shows=[],showLimit=6,urlCache=new Map(),pendingFile=null,pendingUrl=null;
 
 const myProfile=()=>profiles.get(uid)||{};
 const partnerId=()=>[...profiles.keys()].find(id=>id!==uid)||null;
@@ -163,8 +168,29 @@ async function loadDays(){
 }
 async function loadPriv(){const {data}=await sb.from("private_items").select("id,data");priv=new Map((data||[]).map(r=>[r.id,r.data]))}
 async function loadBox(){const {data}=await sb.from("box").select("*").order("created_at",{ascending:false}).limit(300);box=data||[]}
-async function loadInbox(){const {data}=await sb.from("nudges").select("*").eq("to_user",uid).order("created_at",{ascending:false});inbox=data||[]}
-async function loadAll(){await Promise.all([loadProfiles(),loadDays(),loadPriv(),loadBox(),loadInbox()]);render()}
+// Nudges of the last 3 days: ones I received (inbox), thank-yous for ones I sent, and when I last sent each kind.
+async function loadInbox(){
+  const since=new Date(Date.now()-3*864e5).toISOString();
+  const {data}=await sb.from("nudges").select("*").gte("created_at",since).order("created_at",{ascending:false});
+  const all=data||[];
+  inbox=all.filter(n=>n.to_user===uid&&!n.dismissed_at);
+  thanks=all.filter(n=>n.from_user===uid&&n.answered_at&&!n.thanks_seen_at);
+  sentLast={};
+  all.filter(n=>n.from_user===uid).forEach(n=>{const t=+new Date(n.created_at);if(!sentLast[n.kind]||t>sentLast[n.kind])sentLast[n.kind]=t});
+}
+async function loadShows(){
+  const {data,error}=await sb.from("shows").select("*").order("created_at",{ascending:false}).limit(60);
+  if(error){shows=[];return}
+  shows=data||[];await signShows();
+}
+// Photos live in a private bucket, so each one needs a temporary signed link.
+async function signShows(){
+  const need=shows.slice(0,showLimit).map(x=>x.path).filter(p=>{const c=urlCache.get(p);return !c||c.exp<Date.now()+60000});
+  if(!need.length)return;
+  const {data}=await sb.storage.from("shows").createSignedUrls(need,6*3600);
+  (data||[]).forEach(r=>{if(r.signedUrl)urlCache.set(r.path,{url:r.signedUrl,exp:Date.now()+6*3600e3})});
+}
+async function loadAll(){await Promise.all([loadProfiles(),loadDays(),loadPriv(),loadBox(),loadInbox(),loadShows()]);render()}
 
 function subscribe(){
   if(channel)sb.removeChannel(channel);
@@ -174,6 +200,7 @@ function subscribe(){
     .on("postgres_changes",{event:"*",schema:"public",table:"box"},re(loadBox))
     .on("postgres_changes",{event:"*",schema:"public",table:"nudges"},re(loadInbox))
     .on("postgres_changes",{event:"*",schema:"public",table:"profiles"},re(loadProfiles))
+    .on("postgres_changes",{event:"*",schema:"public",table:"shows"},re(loadShows))
     .subscribe(s=>{if(s==="SUBSCRIBED")$("sync").textContent="Синхронізується між вами";else if(s!=="CLOSED")$("sync").textContent="Підключаюсь…"});
 }
 
@@ -202,7 +229,7 @@ function checkEl(id,text,checked,onChange,tag,onDel){
 function essDue(e,d){const a=(d&&d[e.k])||[];const h=new Date().getHours();if(h<8||h>=23)return false;if(!a.length)return true;return (Date.now()-Math.max(...a))/36e5>=e.gap}
 function essNote(e,d){const a=(d&&d[e.k])||[];return a.length?("сьогодні "+a.length+" · востаннє о "+hm(Math.max(...a))):"сьогодні ще не було"}
 let lastAdd={};
-function addEss(k){lastAdd[k]=Date.now();saveMe({[k]:[...(myToday()[k]||[]),Date.now()].sort((x,y)=>x-y)});setTimeout(render,1600)}
+function addEss(k){lastAdd[k]=Date.now();saveMe({[k]:[...(myToday()[k]||[]),Date.now()].sort((x,y)=>x-y)});setTimeout(render,1600);answerPending(k,3*3600e3)}
 function setEssTime(k,i,val){
   const a=[...(myToday()[k]||[])];if(!val)return;
   const [H,M]=val.split(":").map(Number);const d=new Date();d.setHours(H,M,0,0);
@@ -294,8 +321,8 @@ function personCard(id,d,isMe){
   who.append(el("small",null,d&&d.updated?(isToday?"оновлено о "+hm(d.updated):"востаннє "+dshort(d.updated)):""));
   c.append(who);
   if(!d||!isToday){c.append(el("p","empty",isMe?"Відміть свій стан у вкладці «Стан», і він зʼявиться тут для вас обох.":"Сьогодні стан ще не відмічено."));if(!isMe)c.append(nudgeRow(id));return c}
-  const n=find(NEED,d.need);
-  if(n){const nb=el("div","need",isMe?n.t:n.o);c.append(nb);if(!isMe)c.append(el("p","tip",n.tip))}
+  const n=d.need==="own"&&d.needText?{t:d.needText,o:d.needText}:find(NEED,d.need);
+  if(n){const nb=el("div","need",isMe?n.t:n.o);c.append(nb);if(!isMe&&n.tip)c.append(el("p","tip",n.tip))}
   const ws=whysOf(d);
   if(ws.length){const q=el("ul","whys");ws.forEach(w=>{const li=el("li","why","«"+w.text+"»");if(w.ts)li.append(el("small",null," "+hm(w.ts)));q.append(li)});c.append(q)}
   let chips=null;
@@ -310,17 +337,44 @@ function personCard(id,d,isMe){
 function nudgeRow(id,d){
   const r=el("div","nudges");
   Object.keys(NUDGE).forEach(k=>{
-    if(d&&k!=="hug"&&!essDue(find(ESS,k),d))return;
-    const sent=sentNudge[id+k]&&Date.now()-sentNudge[id+k]<60000;
-    const b=btn("nbtn"+(sent?" sent":""),sent?"Надіслано ✓":NUDGE[k],async()=>{
-      sentNudge[id+k]=Date.now();render();
+    const e=find(ESS,k);
+    if(d&&e&&!essDue(e,d))return;
+    const last=sentLast[k]||0,ago=Date.now()-last;
+    if(last&&ago<60000){r.append(btn("nbtn sent","Надіслано ✓",()=>{}));return}
+    if(last&&ago<NUDGE_GAP){
+      const b=btn("nbtn wait",NUDGE[k]+" · з "+hm(last+NUDGE_GAP),()=>{});b.disabled=true;
+      b.title="Нагадано о "+hm(last)+". Наступне можна через 2 години після попереднього.";r.append(b);return;
+    }
+    r.append(btn("nbtn",NUDGE[k],async()=>{
+      sentLast[k]=Date.now();render();setTimeout(render,61000);
       const {error}=await sb.from("nudges").insert({couple_id:myProfile().couple_id,from_user:uid,to_user:id,kind:k});
-      if(error)return syncErr(error);
+      if(error){await loadInbox();render();$("sync").textContent="Це нагадування вже було недавно. Наступне можна через 2 години.";return}
       sb.functions.invoke("notify",{body:{type:"nudge",kind:k}}).catch(()=>{});
-    });
-    r.append(b);
+    }));
   });
   return r;
+}
+// I answer my partner's nudge: the latest one of this kind gets "answered" (they get a thank-you),
+// older ones of the same kind are just closed. maxAge limits auto-answers when I log water/food myself.
+async function answerPending(kind,maxAge){
+  const list=inbox.filter(n=>n.kind===kind&&(!maxAge||Date.now()-new Date(n.created_at)<maxAge));
+  if(!list.length)return;
+  const now=new Date().toISOString(),[last,...older]=list;
+  inbox=inbox.filter(n=>!list.includes(n));render();
+  const {error}=await sb.from("nudges").update({answered_at:now,dismissed_at:now}).eq("id",last.id);
+  if(error)return syncErr(error);
+  if(older.length)await sb.from("nudges").update({dismissed_at:now}).in("id",older.map(n=>n.id));
+  sb.functions.invoke("notify",{body:{type:"thanks",id:last.id}}).catch(()=>{});
+  $("sync").textContent=nm(last.from_user)+" отримає твою відповідь";
+}
+function replyNudge(n){if(find(ESS,n.kind))addEss(n.kind);else answerPending(n.kind)}
+async function dismissNudge(n){
+  inbox=inbox.filter(x=>x.id!==n.id);render();
+  const {error}=await sb.from("nudges").update({dismissed_at:new Date().toISOString()}).eq("id",n.id);if(error)syncErr(error);
+}
+async function seenThanks(n){
+  thanks=thanks.filter(x=>x.id!==n.id);render();
+  const {error}=await sb.from("nudges").update({thanks_seen_at:new Date().toISOString()}).eq("id",n.id);if(error)syncErr(error);
 }
 
 /* ---------- render ---------- */
@@ -330,7 +384,10 @@ function render(){
   $("date").textContent=new Date().toLocaleDateString("uk-UA",{weekday:"long",day:"numeric",month:"long"});
   const ib=$("inbox");ib.replaceChildren();
   inbox.forEach(n=>{const t=el("div","toast");t.append(el("span",null,nm(n.from_user)+" "+NUDGE_IN[n.kind]+" · "+hm(n.created_at)));
-    t.append(btn("del","×",async()=>{inbox=inbox.filter(x=>x.id!==n.id);render();await sb.from("nudges").delete().eq("id",n.id)},"Прибрати"));ib.append(t)});
+    if(REPLY[n.kind])t.append(btn("plus sm",REPLY[n.kind],()=>replyNudge(n)));
+    t.append(btn("del","×",()=>dismissNudge(n),"Прибрати"));ib.append(t)});
+  thanks.forEach(n=>{const t=el("div","toast thanks");t.append(el("span",null,nm(n.to_user)+": «"+(REPLY_THANKS[n.kind]||"Дякую!")+"» · "+hm(n.answered_at)));
+    t.append(btn("del","×",()=>seenThanks(n),"Прибрати"));ib.append(t)});
   if(tab==="us")renderUs();
   if(tab==="state")renderState(d);
   if(tab==="care")renderCare(d);
@@ -345,17 +402,75 @@ function renderUs(){
   else{const c=el("article","card c-"+(colorOf(uid)==="yellow"?"red":"yellow"));c.append(el("h3",null,"Твоя людина"));
     c.append(el("p","empty",myProfile().couple_id?"Картка зʼявиться, щойно твоя людина введе код пари.":"Створи пару в налаштуваннях, щоб бачити одне одного."));us.append(c)}
   renderPushBanner();
+  renderShows();
 }
+const when=ts=>new Date(ts).toDateString()===new Date().toDateString()?"сьогодні о "+hm(ts):dshort(ts)+" о "+hm(ts);
+function renderShows(){
+  const box=$("showsBox");box.hidden=!myProfile().couple_id;if(box.hidden)return;
+  const g=$("shows");g.replaceChildren();
+  if(!shows.length)g.append(el("p","empty","Фото з дня: що на тарілці, вид з вікна, щось смішне чи гарне. Просто щоб бачити одне одного."));
+  shows.slice(0,showLimit).forEach(s=>{
+    const f=el("figure","shot c-"+colorOf(s.author));
+    const im=el("img");im.alt=s.caption||"Фото від "+nm(s.author);im.loading="lazy";
+    const c=urlCache.get(s.path);if(c)im.src=c.url;
+    const open=btn("shotimg","",()=>openPhoto(s),"Відкрити фото");open.append(im);f.append(open);
+    const cap=el("figcaption");const tx=el("div","txt");
+    if(s.caption)tx.append(el("div",null,s.caption));
+    tx.append(el("small",null,nm(s.author)+" · "+when(s.created_at)));cap.append(tx);
+    if(s.author===uid)cap.append(btn("del","×",()=>delShow(s),"Видалити фото"));
+    f.append(cap);g.append(f);
+  });
+  $("showMore").hidden=shows.length<=showLimit;
+}
+function openPhoto(s){
+  const c=urlCache.get(s.path);if(!c)return;
+  $("photoBig").src=c.url;$("photoBig").alt=s.caption||"Фото";
+  $("photoCap").textContent=s.caption||"";$("photoMeta").textContent=nm(s.author)+" · "+when(s.created_at);
+  $("photoView").showModal();
+}
+async function delShow(s){
+  if(!confirm("Видалити це фото?"))return;
+  shows=shows.filter(x=>x.id!==s.id);render();
+  const {error}=await sb.from("shows").delete().eq("id",s.id);if(error)return syncErr(error);
+  await sb.storage.from("shows").remove([s.path]);
+}
+// Phone photos are large: shrink to 1600px JPEG before uploading.
+async function shrink(file){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=new Image();img.src=url;await img.decode();
+    const k=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight));
+    const cv=document.createElement("canvas");cv.width=Math.round(img.naturalWidth*k);cv.height=Math.round(img.naturalHeight*k);
+    cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+    return await new Promise((res,rej)=>cv.toBlob(b=>b?res(b):rej(new Error("toBlob")),"image/jpeg",.82));
+  }finally{URL.revokeObjectURL(url)}
+}
+function closeShowForm(){if(pendingUrl)URL.revokeObjectURL(pendingUrl);$("showForm").hidden=true;$("showCaption").value="";$("showPreview").removeAttribute("src");pendingFile=null;pendingUrl=null}
 function renderState(d){
   const lvl=d.energy||0;
   document.querySelectorAll(".lvl").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.l===lvl)));
-  chipRow($("needChips"),NEED,"need"," needc");multiRow($("sleepChips"),SLEEP,"sleep",["good"]);chipRow($("headChips"),HEAD,"head");multiRow($("moodChips"),MOOD,"mood");
+  needRow(d);multiRow($("sleepChips"),SLEEP,"sleep",["good"]);chipRow($("headChips"),HEAD,"head");multiRow($("moodChips"),MOOD,"mood");
   const showPain=d.head==="pain"||d.head==="migraine",showSigns=d.head==="prodrome"||d.head==="migraine";
   $("painBox").hidden=!showPain;if(showPain)scaleRow($("painChips"),"pain");
   $("signBox").hidden=!showSigns;if(showSigns)multiRow($("signChips"),SIGNS,"signs");
   const wl=$("whyList");wl.replaceChildren();
   whysOf(d).forEach((w,i)=>{const li=el("li","item");const tx=el("div","txt");const inner=el("div",null,w.text);if(w.ts)inner.append(el("small",null,hm(w.ts)));tx.append(inner);li.append(tx);
     li.append(btn("del","×",()=>{const all=whysOf(myToday());all.splice(i,1);saveMe({whys:all})},"Прибрати причину"));wl.append(li)});
+}
+// "Що мені зараз треба": built-in options, my own saved ones (synced, private) and "+ Своє".
+const ownNeeds=()=>((priv.get("needs_own")||{}).list)||[];
+function saveOwnNeed(text){putPriv("needs_own",{kind:"needs_own",list:[text,...ownNeeds().filter(x=>x!==text)].slice(0,6)})}
+function needRow(d){
+  const box=$("needChips");chipRow(box,NEED,"need"," needc");
+  const cur=d.need==="own"?d.needText:null;
+  [...new Set([...(cur?[cur]:[]),...ownNeeds()])].forEach(t=>{
+    const on=cur===t,w=el("span","chipwrap");
+    const b=btn("chip needc",t,()=>saveMe(on?{need:null,needText:null}:{need:"own",needText:t}));b.setAttribute("aria-pressed",String(on));
+    w.append(b);
+    if(ownNeeds().includes(t))w.append(btn("del","×",()=>putPriv("needs_own",{kind:"needs_own",list:ownNeeds().filter(x=>x!==t)}),"Прибрати «"+t+"» зі списку"));
+    box.append(w);
+  });
+  if($("needForm").hidden)box.append(btn("chip add","+ Своє",()=>{$("needForm").hidden=false;render();$("needText").focus()}));
 }
 function renderCare(d){
   const lvl=d.energy||0,care=careToday(),mig=d.head==="migraine";
@@ -594,6 +709,34 @@ $("whyForm").addEventListener("submit",e=>{
   saveMe({whys:[...whysOf(myToday()),{text,ts:Date.now()}]});$("why").value="";flash(e.submitter,"✓ Додано");
 });
 $("toggleAll").addEventListener("click",()=>{showAll=!showAll;render()});
+$("needForm").addEventListener("submit",e=>{e.preventDefault();const text=$("needText").value.trim();if(!text)return;
+  $("needText").value="";$("needForm").hidden=true;saveOwnNeed(text);saveMe({need:"own",needText:text})});
+$("needCancel").addEventListener("click",()=>{$("needText").value="";$("needForm").hidden=true;render()});
+$("showFile").addEventListener("change",async e=>{
+  const f=e.target.files&&e.target.files[0];e.target.value="";if(!f)return;
+  try{pendingFile=await shrink(f)}catch(err){console.error(err);$("sync").textContent="Не вдалося відкрити це фото. Спробуй інше або зроби знімок екрана.";return}
+  pendingUrl=URL.createObjectURL(pendingFile);$("showPreview").src=pendingUrl;$("showForm").hidden=false;$("showCaption").focus();
+});
+$("showCancel").addEventListener("click",closeShowForm);
+$("showForm").addEventListener("submit",async e=>{
+  e.preventDefault();const cid=myProfile().couple_id;if(!pendingFile||!cid)return;
+  const b=$("showSubmit");b.disabled=true;b.textContent="Завантажую…";
+  const path=cid+"/"+uid+"/"+Date.now().toString(36)+Math.random().toString(36).slice(2,6)+".jpg";
+  const caption=$("showCaption").value.trim();
+  try{
+    const up=await sb.storage.from("shows").upload(path,pendingFile,{contentType:"image/jpeg",cacheControl:"31536000"});
+    if(up.error)throw up.error;
+    const {error}=await sb.from("shows").insert({couple_id:cid,author:uid,path,caption});
+    if(error){await sb.storage.from("shows").remove([path]);throw error}
+    urlCache.set(path,{url:pendingUrl,exp:Infinity});pendingUrl=null;
+    closeShowForm();saved();
+    sb.functions.invoke("notify",{body:{type:"show",caption}}).catch(()=>{});
+    await loadShows();render();
+  }catch(err){syncErr(err)}
+  finally{b.disabled=false;b.textContent="Показати"}
+});
+$("showMore").addEventListener("click",async()=>{showLimit+=6;await signShows();render()});
+$("photoClose").addEventListener("click",()=>$("photoView").close());
 $("careForm").addEventListener("submit",e=>{e.preventDefault();const text=$("careText").value.trim();if(!text)return;
   const id="cc"+Date.now().toString(36);putPriv(id,{kind:"care_custom",text,min:+$("careMin").value});$("careText").value="";flash(e.submitter,"✓ Додано")});
 $("add").addEventListener("submit",e=>{e.preventDefault();const text=$("newText").value.trim();if(!text)return;
@@ -618,7 +761,7 @@ function openEmoji(input,anchor){
   pop.style.top=(window.scrollY+(below?r.bottom+8:r.top-8-pop.offsetHeight))+"px";
 }
 document.addEventListener("click",e=>{if(!pop.hidden&&!pop.contains(e.target)&&!e.target.classList.contains("emojibtn"))pop.hidden=true});
-["why","newText","boxText","careText"].forEach(id=>{const i=$(id);if(!i)return;const b=btn("emojibtn","☺",ev=>{ev.preventDefault();openEmoji(i,ev.currentTarget)},"Додати смайлик");i.after(b)});
+["why","newText","boxText","careText","needText","showCaption"].forEach(id=>{const i=$(id);if(!i)return;const b=btn("emojibtn","☺",ev=>{ev.preventDefault();openEmoji(i,ev.currentTarget)},"Додати смайлик");i.after(b)});
 
 /* ---------- boot ---------- */
 setInterval(render,5*60*1000);

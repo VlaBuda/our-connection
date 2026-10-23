@@ -19,7 +19,11 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
 - `days` (user_id, day, data jsonb): shared daily state — energy 1–4, need, sleep[], head, pain, signs[],
   mood[], whys[{text,ts}], water[ts], food[ts]. Partner can read, only owner writes.
 - `private_items` (tasks, daily care ticks `d_<date>`, custom care `care_custom`) — owner only.
-- `box` ("Для нас": tell/dream/talk, done_at/done_by for history) · `nudges` · `push_subscriptions` · `reminders_sent`.
+- `box` ("Для нас": tell/dream/talk, done_at/done_by for history) · `push_subscriptions` · `reminders_sent`.
+- `nudges` (water/food/rest/hug): one per kind per 2h from a sender (RLS `nudge_ok`); never deleted —
+  `dismissed_at`, `answered_at` (reply button → partner gets a thank-you), `thanks_seen_at`.
+- `shows` + private Storage bucket `shows` (`<couple_id>/<user_id>/<file>.jpg`): "Хочу тобі показати" photos.
+- Own "що мені треба": `days.data.need = "own"` + `needText`; saved list in `private_items` id `needs_own`.
 
 ## Applying changes
 - SQL changes: add a new file in `supabase/migrations/` and ask the user to run it in Supabase SQL Editor.
@@ -29,7 +33,7 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
 - The user is non-technical-ish (PM background); give step-by-step instructions in Ukrainian.
 
 ## UI
-- Tabs: Ми (two cards, partner's advice under each state) · Стан · Турбота (now, water/food with
+- Tabs: Ми (two cards, partner's advice under each state; "Хочу тобі показати" photo feed) · Стан · Турбота (now, water/food with
   editable times, self-care by energy level, tasks) · Для нас (with history) · Статистика.
 - Her colour red, his yellow. 13 themes in `THEMES` (app.js); images in `themes/` with `-sm` previews
   and AI-upscaled `-hd` versions used on screens ≥900px (`HD_READY`).
