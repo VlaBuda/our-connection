@@ -567,8 +567,6 @@ function personCard(id,d,isMe){
     if(p.status_at)sl.append(el("small",null," з "+(new Date(p.status_at).toDateString()===new Date().toDateString()?hm(p.status_at):dshort(p.status_at)+" "+hm(p.status_at))));
     c.append(sl);if(!isMe&&st.tip)c.append(el("p","tip",st.tip))}
   c.append(...nsBlock(id,isMe));
-  if((!d||!isToday)&&!statusInfo(profiles.get(id)))c.append(...nsBlock(id,isMe));
-  if((!d||!isToday)&&statusInfo(profiles.get(id))){const st=statusInfo(profiles.get(id));c.append(el("div","status",st.i+" "+st.t),...nsBlock(id,isMe))}
   if(!d||!isToday){c.append(el("p","empty",isMe?"Відміть свій стан у вкладці «Стан», і він зʼявиться тут для вас обох.":"Сьогодні стан ще не відмічено."));if(!isMe)c.append(nudgeRow(id));return c}
   const n=d.need==="own"&&d.needText?{t:d.needText,o:d.needText}:find(NEED,d.need);
   if(n){const nb=el("div","need"+(fresh.has("need")?" fresh":""),isMe?n.t:n.o);c.append(nb);if(!isMe&&n.tip)c.append(el("p","tip",n.tip))}
