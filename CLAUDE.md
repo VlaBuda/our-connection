@@ -50,8 +50,9 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
 
 ## Applying changes
 - SQL changes: add a new file in `supabase/migrations/` and ask the user to run it in Supabase SQL Editor.
-- `notify` function changes: the user redeploys by pasting `supabase/functions/notify/index.ts` into
-  Supabase → Edge Functions → notify → Code → Deploy ("Verify JWT" must stay off).
+- `notify` function deploys automatically: GitHub Action `.github/workflows/deploy-functions.yml` runs on every push that
+  touches `supabase/functions/**` (secret SUPABASE_ACCESS_TOKEN, project-scoped). No manual paste needed; check the
+  Actions run after pushing. Manual fallback: paste into Supabase → Edge Functions → notify → Code ("Verify JWT" off).
 - Bump `CACHE` in `sw.js` on every frontend release.
 - The user is non-technical-ish (PM background); give step-by-step instructions in Ukrainian.
 
