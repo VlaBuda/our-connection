@@ -43,10 +43,11 @@ const json = (b: unknown, status = 200) =>
 
 function kyivNow() {
   const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hour12: false,
+    timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false,
   }).formatToParts(new Date());
   const g = (t: string) => parts.find((p) => p.type === t)!.value;
-  return { date: `${g("year")}-${g("month")}-${g("day")}`, hour: Number(g("hour")) % 24 };
+  const hour = Number(g("hour")) % 24;
+  return { date: `${g("year")}-${g("month")}-${g("day")}`, hour, min: hour * 60 + Number(g("minute")) };
 }
 
 async function pushTo(userId: string, payload: Record<string, unknown>) {
@@ -109,17 +110,71 @@ async function planReminders() {
   return sent;
 }
 
+// Meds: "meds" {list:[{id,name,time "HH:MM"}]}, ticks in "d_<date>".meds. One reminder per med per day,
+// within 45 minutes after its time. Runs day and night (some meds are taken late).
+async function medReminders(uid: string, date: string, min: number) {
+  const { data: rows } = await admin.from("private_items").select("id,data").eq("user_id", uid).in("id", ["meds", "d_" + date]);
+  const meds = (rows?.find((r) => r.id === "meds")?.data?.list ?? []) as { id: string; name: string; time: string }[];
+  const ticks = (rows?.find((r) => r.id === "d_" + date)?.data?.meds ?? {}) as Record<string, number>;
+  let sent = 0;
+  for (const m of meds) {
+    const [H, M] = String(m.time).split(":").map(Number);
+    const t = H * 60 + M;
+    if (min < t || min >= t + 45 || ticks[m.id]) continue;
+    if (!(await allow(uid, `med:${m.id}:${date}`, 24 * 60))) continue;
+    await pushTo(uid, { title: "💊 " + m.name, body: "Час прийому. Відміть у «Турботі», коли вип'єш.", tag: "med-" + m.id });
+    sent++;
+  }
+  return sent;
+}
+
+// Cycle forecast, same rules as cycStarts()/cycStats() in app.js. Returns days until the next period, or null.
+const BLEED = ["light", "medium", "heavy"];
+const dDiff = (a: string, b: string) => Math.round((Date.parse(a + "T00:00:00Z") - Date.parse(b + "T00:00:00Z")) / 864e5);
+const dAdd = (a: string, n: number) => new Date(Date.parse(a + "T00:00:00Z") + n * 864e5).toISOString().slice(0, 10);
+async function cycleForecast(uid: string, date: string) {
+  const { data: cfgRow } = await admin.from("private_items").select("data").eq("user_id", uid).eq("id", "cycle").maybeSingle();
+  const cfg = cfgRow?.data as { enabled?: boolean; starts?: string[]; share?: Record<string, boolean> } | undefined;
+  if (!cfg?.enabled) return null;
+  const { data: days } = await admin.from("private_items").select("id,data").eq("user_id", uid).like("id", "cyc_%");
+  const marks = (days ?? []).filter((r) => BLEED.includes(r.data?.flow)).map((r) => r.id.slice(4)).sort();
+  const auto = marks.filter((d, i) => !marks.slice(0, i).some((p) => dDiff(d, p) > 0 && dDiff(d, p) <= 10));
+  const all = [...new Set([...(cfg.starts ?? []), ...auto])].sort();
+  const starts = all.filter((d, i) => !all.slice(0, i).some((p) => dDiff(d, p) <= 10)).filter((d) => d <= date);
+  if (!starts.length) return null;
+  const gaps: number[] = [];
+  for (let i = 1; i < starts.length; i++) { const g = dDiff(starts[i], starts[i - 1]); if (g >= 15 && g <= 60) gaps.push(g); }
+  const last6 = gaps.slice(-6);
+  const len = last6.length ? Math.round(last6.reduce((a, b) => a + b, 0) / last6.length) : 28;
+  const next = dAdd(starts[starts.length - 1], len);
+  return { toNext: dDiff(next, date), next, share: cfg.share ?? {} };
+}
+
 const lastTs = (a: unknown) => (Array.isArray(a) && a.length ? Number(a[a.length - 1]) : 0);
 const has = (v: unknown, k: string) => (Array.isArray(v) ? v.includes(k) : v === k);
 
 async function tick() {
   const { date, hour } = kyivNow();
   const plansSent = await planReminders();
-  if (hour < 9 || hour >= 22) return { skipped: "night", plansSent };
+  const { min } = kyivNow();
   const { data: subs } = await admin.from("push_subscriptions").select("user_id");
   const users = [...new Set((subs ?? []).map((s) => s.user_id))];
+  let medsSent = 0;
+  for (const uid of users) medsSent += await medReminders(uid, date, min);
+  if (hour < 9 || hour >= 22) return { skipped: "night", plansSent, medsSent };
   let sent = 0;
   for (const uid of users) {
+    // Period expected in two days: tell her, and the partner if she shares the forecast.
+    const fc = await cycleForecast(uid, date);
+    if (fc && fc.toNext === 2 && hour >= 10 && (await allow(uid, "cycle:" + fc.next, 5 * 24 * 60))) {
+      await pushTo(uid, { title: "🩸 Скоро місячні", body: "Ймовірно, через 2 дні. Варто заздалегідь зменшити навантаження й запастися потрібним.", tag: "cycle" });
+      const { data: me } = await admin.from("profiles").select("name,couple_id").eq("id", uid).single();
+      if (fc.share.forecast && me?.couple_id) {
+        const { data: pr } = await admin.from("profiles").select("id").eq("couple_id", me.couple_id).neq("id", uid).maybeSingle();
+        if (pr) await pushTo(pr.id, { title: "🩸 " + (me.name || "Твоя людина"), body: "Місячні очікуються приблизно через 2 дні. Можна підготуватися: тепло, терпіння й щось смачне 🙂", tag: "cycle" });
+      }
+      sent++;
+    }
     const { data: row } = await admin.from("days").select("data").eq("user_id", uid).eq("day", date).maybeSingle();
     const d = (row?.data ?? {}) as Record<string, unknown>;
     const now = Date.now();

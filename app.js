@@ -432,7 +432,7 @@ async function toggleWatch(target,kind){
   const {error}=await sb.from("watches").insert(row);if(error){syncErr(error);await loadWatches();render()}else saved();
 }
 async function loadPlans(){const {data,error}=await sb.from("plans").select("*").order("created_at",{ascending:false}).limit(200);plans=error?[]:(data||[])}
-async function loadAll(){await Promise.all([loadProfiles(),loadDays(),loadPriv(),loadBox(),loadInbox(),loadShows(),loadPlans(),loadWatches()]);render()}
+async function loadAll(){await Promise.all([loadProfiles(),loadDays(),loadPriv(),loadBox(),loadInbox(),loadShows(),loadPlans(),loadWatches()]);render();if(cycCfg().enabled)syncCycle()}
 
 function subscribe(){
   if(channel)sb.removeChannel(channel);
@@ -587,6 +587,7 @@ function stateRows(d){
     if(em.some(e=>["depressed","empty","hopeless","despair","burnout"].includes(e.k)))t.push("Якщо так уже кілька днів, мʼяко запропонуй поговорити з фахівцем. Без тиску.");
     rows.push({f:"emo",label:"Відчуття: "+fieldText("emo",d),alert:qs.some(q=>q==="red"||q==="blue")||!!d.unsure,tips:t,emo:em});
   }
+  const cr=cycleRow(d.cycle);if(cr)rows.push(cr);
   ESS.forEach(e=>{const a=d[e.k]||[];const last=a.length?Math.max(...a):0;
     rows.push({label:e.t+": "+(a.length?a.length+", востаннє о "+hm(last)+(e.k==="food"&&foodKind(d,last)!=="meal"?" ("+FOOD_K[foodKind(d,last)].t.toLowerCase()+")":""):"ще не було"),alert:essDue(e,d),tips:[],ess:e.k})});
   return rows;
@@ -846,7 +847,7 @@ function closeShowForm(){if(pendingUrl)URL.revokeObjectURL(pendingUrl);$("showFo
 function renderState(d){
   const lvl=d.energy||0;
   document.querySelectorAll(".lvl").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.l===lvl)));
-  statusRow();emoMap(d);nsRow();retroRow();
+  statusRow();emoMap(d);nsRow();retroRow();renderCycle();
   needRow(d);multiRow($("sleepChips"),SLEEP,"sleep",["good"]);chipRow($("headChips"),HEAD,"head");multiRow($("moodChips"),MOOD,"mood");
   const showPain=d.head==="pain"||d.head==="migraine",showSigns=d.head==="prodrome"||d.head==="migraine";
   $("painBox").hidden=!showPain;if(showPain)scaleRow($("painChips"),"pain");
@@ -1003,6 +1004,7 @@ function renderCare(d){
   const es=$("ess");es.replaceChildren();ESS.forEach(e=>es.append(essEl(e,d,true)));
   const cu=$("care");cu.replaceChildren();
   $("careHint").textContent=lvl?"Під рівень «"+ELBL[lvl]+"». Тільки твоє, скидається щодня":"Відміть сили у «Стані», і список підлаштується. Зараз показую рівень «трохи є»";
+  renderMeds();
   careList.forEach(c=>cu.append(checkEl("care_"+c.k,c.t,!!care[c.k],v=>setCare(c.k,v),null,c.own?()=>delPriv(c.k):null)));
 
   const maxW=mig&&!showAll?0:d.head==="prodrome"&&!showAll?1:(!lvl||showAll)?3:lvl<=2?1:3;
@@ -1240,6 +1242,141 @@ function renderPatterns(){
   if(nexts.length){const g=el("div","pattern");g.append(el("p","sub","Наступного разу спробувати"));nexts.forEach(x=>g.append(el("p","why","«"+x.r.next+"» · "+dshort(x.e.ts))));box.append(g)}
 }
 
+/* ---------- цикл ---------- */
+// Built on her own marks, not on "textbook" phases. All raw data is private (private_items "cycle", "cyc_<date>");
+// only what she chooses to share is copied into days.data.cycle for the partner.
+const FLOW=[{k:"none",t:"Немає"},{k:"spot",t:"Мазня"},{k:"light",t:"Слабкі"},{k:"medium",t:"Середні"},{k:"heavy",t:"Рясні"}];
+const CPAIN=[{k:0,t:"Немає"},{k:1,t:"Легкий"},{k:2,t:"Сильний"},{k:3,t:"Дуже сильний"}];
+const LIBIDO=[{k:"low",t:"Нижче звичного"},{k:"normal",t:"Як завжди"},{k:"high",t:"Вище"},{k:"sky",t:"До небес 🔥"}];
+const CSYM=[{k:"fatigue",t:"Втома"},{k:"dizzy",t:"Запаморочення"},{k:"breath",t:"Задишка"},{k:"cold",t:"Холодні руки й ноги"},
+  {k:"sweet",t:"Тяга до солодкого"},{k:"ice",t:"Тяга до льоду чи крейди"},{k:"bloat",t:"Здуття"},{k:"headache",t:"Головний біль"},
+  {k:"breasts",t:"Чутливі груди"},{k:"skin",t:"Висипання"},{k:"tearful",t:"Плаксивість"},{k:"irritable",t:"Дратівливість"},
+  {k:"anxious",t:"Тривожність"},{k:"insomnia",t:"Погано спиться"}];
+const CSHARE=[["day","День циклу і місячні"],["forecast","Сповіщення, що місячні скоро"],["flow","Рясність і згустки"],["pain","Біль"],["libido","Лібідо"],["sym","Самопочуття: втома, запаморочення та інше"]];
+const BLEED=["light","medium","heavy"];
+const cycCfg=()=>Object.assign({kind:"cycle",enabled:false,starts:[],share:{day:true,forecast:true,flow:true,pain:true,libido:true,sym:true}},priv.get("cycle")||{});
+const cycDay=date=>priv.get("cyc_"+date)||{};
+const dparse=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const ddiff=(a,b)=>Math.round((dparse(a)-dparse(b))/864e5);
+const dadd=(s,n)=>{const d=dparse(s);d.setDate(d.getDate()+n);return dkey(d)};
+// Period starts: the ones she entered by hand (e.g. from Flo) plus days with real bleeding after 10+ dry days.
+function cycStarts(){
+  const marks=[...priv.entries()].filter(([id,d])=>d.kind==="cyc"&&BLEED.includes(d.flow)).map(([id])=>id.slice(4)).sort();
+  const auto=marks.filter((d,i)=>!marks.slice(0,i).some(p=>ddiff(d,p)>0&&ddiff(d,p)<=10));
+  const all=[...new Set([...arr(cycCfg().starts),...auto])].sort();
+  return all.filter((d,i)=>!all.slice(0,i).some(p=>ddiff(d,p)<=10));
+}
+function cycStats(){
+  const st=cycStarts(),gaps=[];
+  for(let i=1;i<st.length;i++){const g=ddiff(st[i],st[i-1]);if(g>=15&&g<=60)gaps.push(g)}
+  const last6=gaps.slice(-6);
+  const len=last6.length?Math.round(last6.reduce((a,b)=>a+b,0)/last6.length):28;
+  const plen=[];st.slice(-6).forEach(s=>{let n=0;while(n<12&&(BLEED.includes(cycDay(dadd(s,n)).flow)||cycDay(dadd(s,n)).flow==="spot"))n++;if(n)plen.push(n)});
+  const periodLen=plen.length?Math.round(plen.reduce((a,b)=>a+b,0)/plen.length):5;
+  return {starts:st,len,periodLen,known:last6.length};
+}
+function cycNow(date){
+  const s=cycStats(),d=date||today(),last=s.starts.filter(x=>x<=d).pop();if(!last)return null;
+  const day=ddiff(d,last)+1,next=dadd(last,s.len),toNext=ddiff(next,d);
+  const mark=cycDay(d).flow;
+  const period=BLEED.includes(mark)||mark==="spot"||(!mark&&day<=s.periodLen&&d===today());
+  return {...s,last,day,next,toNext,period};
+}
+// What usually happens around this cycle day, from her past cycles (needs at least two cycles).
+function cycPatterns(day){
+  const st=cycStarts();if(st.length<2)return [];
+  const cnt={},seen=new Set();
+  [...priv.entries()].filter(([,d])=>d.kind==="cyc").forEach(([id,d])=>{
+    const date=id.slice(4),last=st.filter(x=>x<=date).pop();if(!last||last===st[st.length-1]&&date>=last)return;
+    const cd=ddiff(date,last)+1;if(Math.abs(cd-day)>1)return;seen.add(last);
+    const add=k=>{cnt[k]=cnt[k]||new Set();cnt[k].add(last)};
+    if(d.flow==="heavy")add("рясно");if(d.clots)add("згустки");if((d.pain||0)>=2)add("сильний біль");
+    if(d.libido==="high"||d.libido==="sky")add("лібідо вгору");if(d.libido==="low")add("лібідо нижче");
+    arr(d.sym).forEach(k=>add((find(CSYM,k)||{t:k}).t.toLowerCase()));
+  });
+  const n=seen.size;if(n<2)return [];
+  return Object.entries(cnt).map(([k,s])=>[k,s.size]).filter(([,c])=>c>=2&&c/n>=.5).sort((a,b)=>b[1]-a[1]).map(([k])=>k).slice(0,6);
+}
+function putCycDay(patch){const date=today();putPriv("cyc_"+date,Object.assign({kind:"cyc"},cycDay(date),patch));setTimeout(syncCycle,50)}
+// Copy the shared part into today's days.data.cycle so the partner can see it.
+function syncCycle(){
+  const cfg=cycCfg(),cur=myToday();
+  if(!cfg.enabled){if(cur.cycle)saveMe({cycle:null});return}
+  const now=cycNow(),sh=cfg.share,d=cycDay(today()),p={};
+  if(now&&sh.day){p.day=now.day;p.period=now.period}
+  if(now&&sh.forecast&&now.toNext>=0&&now.toNext<=3&&!now.period)p.soon=now.toNext;
+  if(sh.flow){if(d.flow&&d.flow!=="none")p.flow=d.flow;if(d.clots)p.clots=true}
+  if(sh.pain&&d.pain)p.pain=d.pain;
+  if(sh.libido&&d.libido)p.libido=d.libido;
+  if(sh.sym&&arr(d.sym).length)p.sym=arr(d.sym);
+  const next=Object.keys(p).length?p:null;
+  if(JSON.stringify(next)!==JSON.stringify(cur.cycle||null))saveMe({cycle:next});
+}
+// Partner-card row for the shared cycle info.
+function cycleRow(c){
+  if(!c)return null;
+  const bits=[];
+  if(c.day)bits.push("день "+c.day+(c.period?" · місячні":""));
+  if(c.soon!=null)bits.push(c.soon===0?"місячні очікуються сьогодні":"місячні ~ через "+c.soon+" дн.");
+  if(c.flow)bits.push((find(FLOW,c.flow)||{}).t.toLowerCase());
+  if(c.clots)bits.push("згустки");
+  if(c.pain)bits.push("біль: "+(find(CPAIN,c.pain)||{}).t.toLowerCase());
+  if(c.libido&&c.libido!=="normal")bits.push("лібідо: "+(find(LIBIDO,c.libido)||{}).t.toLowerCase());
+  if(arr(c.sym).length)bits.push(arr(c.sym).map(k=>(find(CSYM,k)||{t:k}).t.toLowerCase()).join(", "));
+  if(!bits.length)return null;
+  const tips=[];
+  if(c.soon!=null)tips.push("Скоро місячні. Можна підготуватися: спитати, що принести чи як підтримати, і бути мʼякшим наперед.");
+  if(c.period||c.flow==="heavy"||c.clots)tips.push("Ці дні фізично важкі: крововтрата і анемія забирають сили. Тепло, вода, без очікувань активності.");
+  if((c.pain||0)>=2)tips.push("Сильний біль: менше питань, більше турботи. Грілка, тиша, спитай, чи потрібні ліки.");
+  if(arr(c.sym).some(k=>k==="dizzy"||k==="breath"))tips.push("Паморочиться чи бракує повітря: це може бути анемія. Нагадай присісти, попити води й поїсти.");
+  if(c.libido==="high"||c.libido==="sky")tips.push("Хочеться близькості 🔥 Навіть на відстані: голосове, дзвінок, теплі слова.");
+  return {f:"cycle",label:"🩸 "+bits.join(", "),alert:!!(c.period||c.soon!=null||(c.pain||0)>=2),tips};
+}
+function renderCycle(){
+  const cfg=cycCfg(),box=$("cycBox");box.hidden=!cfg.enabled;if(!cfg.enabled)return;
+  const now=cycNow(),d=cycDay(today());
+  const head=$("cycHead");head.replaceChildren();
+  if(!now)head.append(el("p",null,"Відміть сьогоднішні виділення або внеси дати минулих місячних нижче, і зʼявиться день циклу та прогноз."));
+  else{
+    head.append(el("p","cycday","День "+now.day+(now.period?" · місячні":"")));
+    const nx=dparse(now.next).toLocaleDateString("uk-UA",{day:"numeric",month:"long"});
+    head.append(el("small",null,now.toNext>0?"Наступні ~ "+nx+" (через "+now.toNext+" дн.)"+(now.known?" · твій цикл ~"+now.len+" дн.":" · поки рахую за 28 днів"):now.toNext===0?"Місячні очікуються сьогодні":"Затримка "+(-now.toNext)+" дн. відносно прогнозу"));
+    const pt=cycPatterns(now.day);
+    if(pt.length)head.append(el("p","cycpat","Зазвичай у ці дні в тебе: "+pt.join(", ")));
+    if(now.period||d.flow==="heavy")head.append(el("p","hint","Більше води, щось з залізом поїсти, без важкого фізичного. Це не лінь, це крововтрата."));
+  }
+  const one=(boxId,list,field)=>{const b=$(boxId);b.replaceChildren();list.forEach(o=>{const on=d[field]===o.k;const c=btn("chip",o.t,()=>putCycDay({[field]:on?undefined:o.k}));c.setAttribute("aria-pressed",String(on));b.append(c)})};
+  one("cycFlow",FLOW,"flow");
+  const cl=btn("chip warn","Згустки",()=>putCycDay({clots:!d.clots}));cl.setAttribute("aria-pressed",String(!!d.clots));$("cycFlow").append(cl);
+  one("cycPain",CPAIN,"pain");one("cycLibido",LIBIDO,"libido");
+  const sb_=$("cycSym");sb_.replaceChildren();
+  CSYM.forEach(o=>{const on=arr(d.sym).includes(o.k);const c=btn("chip",o.t,()=>putCycDay({sym:on?arr(d.sym).filter(x=>x!==o.k):[...arr(d.sym),o.k]}));c.setAttribute("aria-pressed",String(on));sb_.append(c)});
+  const hist=$("cycStarts");hist.replaceChildren();
+  const st=cycStarts().slice().reverse();
+  st.forEach((s,i)=>{const li=el("li","item");const prev=st[i+1];
+    const tx=el("div","txt");const inner=el("div",null,dparse(s).toLocaleDateString("uk-UA",{day:"numeric",month:"long",year:"numeric"}));
+    if(prev)inner.append(el("small",null,"цикл "+ddiff(s,prev)+" дн."));tx.append(inner);li.append(tx);
+    if(arr(cfg.starts).includes(s))li.append(btn("del","×",()=>putPriv("cycle",Object.assign(cycCfg(),{starts:arr(cfg.starts).filter(x=>x!==s)})),"Прибрати дату"));
+    hist.append(li)});
+  if(!st.length)hist.append(el("p","empty","Поки порожньо. З Flo: відкрий там календар і внеси сюди дати початку кількох останніх місячних."));
+  $("cycCount").textContent=st.length?"("+st.length+")":"";
+}
+/* ---------- ліки й вітаміни ---------- */
+// private_items "meds" {list:[{id,name,time}]}, ticks in d_<date>.meds {id: ts}. Reminders come from the cron tick.
+const medsList=()=>arr((priv.get("meds")||{}).list).slice().sort((a,b)=>a.time.localeCompare(b.time));
+const medTicks=()=>((priv.get("d_"+today())||{}).meds)||{};
+function tickMed(id,v){const d=priv.get("d_"+today())||{kind:"day"};const m=Object.assign({},d.meds||{});if(v)m[id]=Date.now();else delete m[id];putPriv("d_"+today(),Object.assign({},d,{meds:m}))}
+function renderMeds(){
+  const ul=$("meds");ul.replaceChildren();const t=medTicks(),nowHM=hm(Date.now());
+  medsList().forEach(m=>{
+    const done=!!t[m.id],due=!done&&m.time<=nowHM;
+    const li=checkEl("med_"+m.id,m.time+" · "+m.name+(done?" ✓ о "+hm(t[m.id]):""),done,v=>tickMed(m.id,v),null,()=>{if(confirm("Прибрати «"+m.name+" "+m.time+"»?"))putPriv("meds",{kind:"meds",list:medsList().filter(x=>x.id!==m.id)})});
+    if(due)li.classList.add("due");ul.append(li);
+  });
+  if(!medsList().length)ul.append(el("p","empty","Додай назву й час, і в цей час прийде нагадування. Кожен час окремо: залізо 9:00, залізо 21:00."));
+  $("medHint").hidden=!medsList().some(m=>/залізо|желез|iron|fer/i.test(m.name));
+}
+
 /* ---------- push ---------- */
 function b64ToBytes(s){const p="=".repeat((4-s.length%4)%4);const b=atob((s+p).replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from([...b].map(c=>c.charCodeAt(0)))}
 const pushSupported=()=>"serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window;
@@ -1354,6 +1491,17 @@ function renderSettings(){
   const tb=$("themeBtn"),cur=THEMES[themeKey()]||THEMES.apothecary;tb.replaceChildren();
   const ti=el("span","themeimg");ti.style.backgroundImage='url("'+cur.sm+'")';
   tb.append(ti,el("span",null,cur.t),el("span","caret",$("setTheme").hidden?"▾":"▴"));
+  const cy=$("setCycle");cy.replaceChildren();const cfg=cycCfg();
+  const en=el("label","retropriv");const ecb=el("input");ecb.type="checkbox";ecb.checked=!!cfg.enabled;
+  ecb.addEventListener("change",async()=>{await putPriv("cycle",Object.assign(cycCfg(),{enabled:ecb.checked}));syncCycle();renderSettings()});
+  en.append(ecb,el("span",null,"Відстежувати цикл (зʼявиться блок у «Стані»)"));cy.append(en);
+  if(cfg.enabled){
+    cy.append(el("p","sub","Що бачить "+(partnerId()?nm(partnerId()):"партнер")));
+    CSHARE.forEach(([k,t])=>{const l=el("label","retropriv");const c=el("input");c.type="checkbox";c.checked=!!cfg.share[k];
+      c.addEventListener("change",async()=>{const cur=cycCfg();await putPriv("cycle",Object.assign(cur,{share:Object.assign({},cur.share,{[k]:c.checked})}));syncCycle()});
+      l.append(c,el("span",null,t));cy.append(l)});
+    cy.append(el("p","hint","Решта бачиш тільки ти. Усі відмітки й дати зберігаються приватно, партнеру йде лише те, що увімкнено тут."));
+  }
   themeRow($("setTheme"),themeKey(),async k=>{
     ls("theme",k);applyTheme(k);$("setTheme").hidden=true;tb.setAttribute("aria-expanded","false");
     const {error}=await sb.from("profiles").update({theme:k}).eq("id",uid);
@@ -1433,6 +1581,10 @@ $("showForm").addEventListener("submit",async e=>{
   finally{b.disabled=false;b.textContent="Показати"}
 });
 $("showMore").addEventListener("click",async()=>{showLimit+=6;await signShows();render()});
+$("cycAdd").addEventListener("submit",e=>{e.preventDefault();const v=$("cycDate").value;if(!v)return;
+  const cfg=cycCfg();putPriv("cycle",Object.assign(cfg,{starts:[...new Set([...arr(cfg.starts),v])].sort()}));$("cycDate").value="";flash(e.submitter,"✓ Додано");setTimeout(syncCycle,50)});
+$("medForm").addEventListener("submit",e=>{e.preventDefault();const name=$("medName").value.trim(),time=$("medTime").value;if(!name||!time)return;
+  putPriv("meds",{kind:"meds",list:[...medsList(),{id:"m"+Date.now().toString(36),name,time}]});$("medName").value="";flash(e.submitter,"✓ Додано")});
 $("retroSave").addEventListener("click",saveRetro);
 $("retroCancel").addEventListener("click",()=>{$("retroDlg").close();retroDraft=null});
 $("photoClose").addEventListener("click",()=>$("photoView").close());
@@ -1460,7 +1612,7 @@ function openEmoji(input,anchor){
   pop.style.top=(window.scrollY+(below?r.bottom+8:r.top-8-pop.offsetHeight))+"px";
 }
 document.addEventListener("click",e=>{if(!pop.hidden&&!pop.contains(e.target)&&!e.target.classList.contains("emojibtn"))pop.hidden=true});
-["why","newText","boxText","careText","needText","showCaption","planText","statusText","nsText"].forEach(id=>{const i=$(id);if(!i)return;const b=btn("emojibtn","☺",ev=>{ev.preventDefault();openEmoji(i,ev.currentTarget)},"Додати смайлик");i.after(b)});
+["why","newText","boxText","careText","needText","showCaption","planText","statusText","nsText","medName"].forEach(id=>{const i=$(id);if(!i)return;const b=btn("emojibtn","☺",ev=>{ev.preventDefault();openEmoji(i,ev.currentTarget)},"Додати смайлик");i.after(b)});
 
 /* ---------- boot ---------- */
 setInterval(render,5*60*1000);

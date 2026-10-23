@@ -124,6 +124,18 @@
         <div class="emowords" id="emoWords"></div>
         <p class="emoinfo" id="emoInfo" aria-live="polite"></p>
       </div>
+      <div class="cycbox" id="cycBox" hidden>
+        <p class="sub">Цикл <span class="opt">тільки твоє, партнер бачить те, що ти дозволиш у налаштуваннях</span></p>
+        <div class="cychead" id="cycHead"></div>
+        <p class="sub small">Виділення</p><div class="chips" id="cycFlow"></div>
+        <p class="sub small">Біль</p><div class="chips" id="cycPain"></div>
+        <p class="sub small">Лібідо</p><div class="chips" id="cycLibido"></div>
+        <p class="sub small">Самопочуття <span class="opt">можна кілька</span></p><div class="chips" id="cycSym"></div>
+        <details class="history"><summary>Дати місячних <span id="cycCount"></span></summary>
+          <form id="cycAdd" class="inline"><input type="date" id="cycDate" aria-label="Дата початку місячних"><button class="btn" type="submit">Додати початок</button></form>
+          <ul class="list" id="cycStarts"></ul>
+        </details>
+      </div>
       <div class="nsbox">
         <p class="sub">Нервова система</p>
         <p class="hint">Тривалий стан видно, доки не знімеш. Епізод відмічай, коли стався: партнер бачитиме його і час відновлення після нього.</p>
@@ -158,6 +170,13 @@
         <select id="careMin" aria-label="З якого рівня сил показувати"><option value="1">З нуля</option><option value="2" selected>Коли трохи є</option><option value="3">Коли норм</option><option value="4">На розгоні</option></select>
         <button class="btn" type="submit">Додати</button>
       </form>
+    </section>
+    <section>
+      <div class="row"><h2>Ліки й вітаміни</h2></div>
+      <p class="hint">Бачиш тільки ти. У вказаний час прийде нагадування. Назву можна писати як завгодно: її видно в сповіщенні.</p>
+      <ul class="list" id="meds"></ul>
+      <p class="hint" id="medHint" hidden>Якщо лікар не казав інакше: залізо зазвичай краще засвоюється окремо від чаю, кави й молочного.</p>
+      <form id="medForm" class="inline"><input type="text" id="medName" maxlength="40" placeholder="Назва: залізо, D3, омега…" autocomplete="off" aria-label="Назва"><input type="time" id="medTime" aria-label="Час"><button class="btn" type="submit">Додати</button></form>
     </section>
     <section>
       <div class="row"><h2>Задачі</h2><button class="link" id="toggleAll" type="button"></button></div>
@@ -225,6 +244,7 @@
       <button type="button" data-set="me">Про мене</button>
       <button type="button" data-set="look">Вигляд</button>
       <button type="button" data-set="push">Сповіщення</button>
+      <button type="button" data-set="cycle">Цикл</button>
       <button type="button" data-set="pair">Пара</button>
     </nav>
     <div class="setpane" data-setpane="me">
@@ -246,6 +266,7 @@
         <p class="hint">Вмикається окремо на кожному телефоні чи ноутбуці.</p>
       </div>
     </div>
+    <div class="setpane" data-setpane="cycle" hidden><div class="field" id="setCycle"></div></div>
     <div class="setpane" data-setpane="pair" hidden>
       <div class="field"><label>Пара</label><p class="hint" id="pairInfo"></p></div>
       <div class="row"><button class="ghost" id="logout" type="button">Вийти з акаунта</button></div>

@@ -41,6 +41,11 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
 - Episode retrospective (`RETRO` in app.js): triggers / first signs / what helped / power / next time. Shared retro on
   `episode.retro` (partner sees it, card shows "Зазвичай допомагає"); private one in `private_items` "retro_<id>";
   own chip words in "retro_own". `autoFactors()` suggests triggers from the day's marks. Patterns in Статистика.
+- Cycle (opt-in in settings tab «Цикл»): private `private_items` "cycle" {enabled, starts[] (manual, e.g. from Flo),
+  share{day,forecast,flow,pain,libido,sym}} and "cyc_<date>" {flow, clots, pain, libido, sym[]}. Built on her own marks, no
+  textbook phases; `cycPatterns()` shows what usually happens on this cycle day. Shared subset → `days.data.cycle`.
+  Notify tick sends "скоро місячні" 2 days ahead (to partner only if share.forecast).
+- Meds: `private_items` "meds" {list:[{id,name,time}]}, ticks in `d_<date>.meds`; tick reminds within 45 min of time.
 - Own "що мені треба": `days.data.need = "own"` + `needText`; saved list in `private_items` id `needs_own`.
 
 ## Applying changes
@@ -62,3 +67,4 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
 - Fun personality quizzes ("яка я дівчина?" style) — user will pick the format later.
 - Description of her typical week / recurring tasks (she plans to write a spec).
 - Her other cycles (she wants to track them too, to catch triggers) — reuse the retro/patterns approach.
+- Cycle ↔ episodes link in patterns (e.g. meltdowns by cycle day) — not done yet.
