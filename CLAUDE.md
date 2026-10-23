@@ -31,6 +31,9 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
   lists in `STATUS` (app.js); push to partner only for military statuses.
 - Emotion map (How We Feel style, ~80 words in `EMO` with intensity i 1–3, quadrant first, search): `days.data.emo[]` (≤5) + `unsure` flag.
   `hardNow()` decides when the partner's card offers the "embrace" nudge.
+- "Нервова система" on `profiles.ns` {long:[{k,text?,since}], episodes:[{id,k,ts,end?}]}: long states (burnout, autistic
+  burnout…) stay until removed; episodes (`NS_EP`: shutdown, meltdown, panic attack…) show "now" tips for 1 h, then
+  "after" tips until `h` hours pass or "Вже легше". Push type "ns".
 - Own "що мені треба": `days.data.need = "own"` + `needText`; saved list in `private_items` id `needs_own`.
 
 ## Applying changes

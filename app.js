@@ -137,6 +137,8 @@ const EMO=[
   E("red",3,"disgust","Огида","Хочеться відштовхнути щось чи когось від себе."),
   E("red",3,"shock","Шок","Щось сталося раптово, і думки ніби зупинились."),
   E("red",3,"panic","Паніка","Страх накриває хвилею, важко дихати і думати."),
+  E("red",3,"panic_attack","Панічна атака","Раптовий напад: серце калатає, бракує повітря, тремтить тіло, здається, що зараз станеться щось страшне. Минає, хоч у моменті так не здається."),
+  E("red",3,"meltdown","Мелтдаун","Перевантаження проривається назовні: сльози, крик, неможливість себе зупинити. Це не вибір і не маніпуляція, а нервова система, якій забагато."),
   E("red",3,"rage","Лють","Злість настільки сильна, що важко її втримати."),
 
   E("yellow",1,"curious","Цікавість","Хочеться дізнатися, спробувати, розібратись."),
@@ -202,6 +204,36 @@ const EMO=[
   E("green",3,"serene","Умиротворення","Глибокий тихий спокій."),
   E("green",3,"blissful","Блаженство","Дуже добре, тихо і повно водночас."),
 ];
+// "Нервова система": long states stay until removed; episodes are moments with a recovery tail ("післясмак").
+const NS_LONG=[
+  {k:"burnout",t:"Емоційне вигорання",tip:"Ресурсу мало вже давно. Менше прохань і рішень, більше простої турботи без очікувань."},
+  {k:"aut_burnout",t:"Аутистичне вигорання",tip:"Сил на звуки, людей, розмови й маскування дуже мало. Може гірше говорити й переносити шум. Тиша не про тебе: допомагай знімати навантаження."},
+  {k:"depressive",t:"Депресивний період",tip:"Навіть прості речі даються важко. Не «збирайся», а маленька турбота: нагадати поїсти, побути поряд. Якщо довго, мʼяко про фахівця."},
+  {k:"anxious",t:"Тривожний період",tip:"Тривога тримається фоном. Допомагає передбачуваність: кажи, коли зможеш вийти на звʼязок."},
+  {k:"overload",t:"Хронічне перевантаження",tip:"Подразників і справ давно забагато. Менше нового й несподіваного, більше тиші."},
+];
+const NS_EP=[
+  {k:"shutdown",t:"Шатдаун",h:24,now:"Може не говорити й не відповідати. Не тисни: одне тепле повідомлення, яке не потребує відповіді.",
+    after:"Після шатдауну нервова система ще виснажена: тихо, без рішень і розборів."},
+  {k:"meltdown",t:"Мелтдаун",h:24,now:"Це не про тебе і не вибір. Не сперечайся, не пояснюй, менше слів.",
+    after:"Після мелтдауну буває соромно й порожньо. Без розборів «що це було», просто тепло."},
+  {k:"panic_attack",t:"Панічна атака",h:12,now:"Якщо на звʼязку: повільно дихати разом і коротко «я тут, це мине».",
+    after:"Тіло ще втомлене й насторожі. Спокійний тон, без тривожних новин і тем."},
+  {k:"sensory",t:"Сенсорне перевантаження",h:6,now:"Текст замість дзвінка, мінімум слів.",
+    after:"Чутливість ще підвищена: тихіше, простіше, менше нового."},
+  {k:"flashback",t:"Флешбек",h:24,now:"Коротко нагадай, що зараз інший час і ти поряд. Без розпитувань.",
+    after:"Може ще довго бути насторожі. Без різких тем і несподіванок."},
+  {k:"freeze",t:"Параліч дій",h:3,now:"Не виходить почати навіть просте. Допомагає назвати один крихітний крок або побути на звʼязку, поки робиться.",
+    after:"Сил після ступору мало, не завалюй справами."},
+];
+const nsOf=id=>{const n=(profiles.get(id)||{}).ns;return {long:arr(n&&n.long),episodes:arr(n&&n.episodes)}};
+const epInfo=k=>find(NS_EP,k);
+// Episodes still "in effect": happening (< 1 h) or recovering (< its h hours), not marked as better.
+function activeEpisodes(id){
+  return nsOf(id).episodes.filter(e=>!e.end&&epInfo(e.k)&&Date.now()-e.ts<epInfo(e.k).h*3600e3).sort((a,b)=>b.ts-a.ts);
+}
+const epPhase=e=>Date.now()-e.ts<3600e3?"now":"after";
+const longLabel=l=>l.k==="own"?l.text:(find(NS_LONG,l.k)||{}).t;
 const EMO_MAX=5,EMO_LVL={1:"Трохи",2:"Помітно",3:"Сильно"};
 const emoOf=k=>EMO.find(e=>e.k===k);
 const PLAN_KIND={game:{i:"🎮",t:"Гра"},watch:{i:"🎬",t:"Перегляд"},call:{i:"📞",t:"Розмова"},other:{i:"✨",t:"Інше"}};
@@ -506,6 +538,19 @@ function stateRows(d){
   ESS.forEach(e=>{const a=d[e.k]||[];rows.push({label:e.t+": "+(a.length?a.length+", востаннє о "+hm(Math.max(...a)):"ще не було"),alert:essDue(e,d),tips:[],ess:e.k})});
   return rows;
 }
+function nsBlock(id,isMe){
+  const out=[],ns=nsOf(id),eps=activeEpisodes(id);
+  if(!ns.long.length&&!eps.length)return out;
+  const box=el("div","nsblock");
+  ns.long.forEach(l=>{const info=find(NS_LONG,l.k);const r=el("div","nsrow");
+    r.append(el("span","fact alert",longLabel(l)+(l.since?" · з "+dshort(l.since):"")));
+    if(!isMe&&info)r.append(el("p","tip",info.tip));box.append(r)});
+  eps.forEach(e=>{const info=epInfo(e.k),ph=epPhase(e);const r=el("div","nsrow");
+    const until=new Date(e.ts+info.h*3600e3);
+    r.append(el("span","fact alert ep","⚡ "+info.t+" о "+hm(e.ts)+(ph==="after"?" · відновлення до ~"+(until.toDateString()===new Date().toDateString()?hm(until):"завтра "+hm(until)):"")));
+    if(!isMe)r.append(el("p","tip",ph==="now"?info.now:info.after));box.append(r)});
+  out.push(box);return out;
+}
 function personCard(id,d,isMe){
   const c=el("article","card c-"+colorOf(id));
   const pt=THEMES[(profiles.get(id)||{}).theme];
@@ -521,7 +566,9 @@ function personCard(id,d,isMe){
   if(st){const p=profiles.get(id);const sl=el("div","status");sl.append(el("span",null,st.i+" "+st.t));
     if(p.status_at)sl.append(el("small",null," з "+(new Date(p.status_at).toDateString()===new Date().toDateString()?hm(p.status_at):dshort(p.status_at)+" "+hm(p.status_at))));
     c.append(sl);if(!isMe&&st.tip)c.append(el("p","tip",st.tip))}
-  if((!d||!isToday)&&statusInfo(profiles.get(id))){const st=statusInfo(profiles.get(id));c.append(el("div","status",st.i+" "+st.t))}
+  c.append(...nsBlock(id,isMe));
+  if((!d||!isToday)&&!statusInfo(profiles.get(id)))c.append(...nsBlock(id,isMe));
+  if((!d||!isToday)&&statusInfo(profiles.get(id))){const st=statusInfo(profiles.get(id));c.append(el("div","status",st.i+" "+st.t),...nsBlock(id,isMe))}
   if(!d||!isToday){c.append(el("p","empty",isMe?"Відміть свій стан у вкладці «Стан», і він зʼявиться тут для вас обох.":"Сьогодні стан ще не відмічено."));if(!isMe)c.append(nudgeRow(id));return c}
   const n=d.need==="own"&&d.needText?{t:d.needText,o:d.needText}:find(NEED,d.need);
   if(n){const nb=el("div","need"+(fresh.has("need")?" fresh":""),isMe?n.t:n.o);c.append(nb);if(!isMe&&n.tip)c.append(el("p","tip",n.tip))}
@@ -551,7 +598,7 @@ function nudgeRow(id,d){
   Object.keys(NUDGE).forEach(k=>{
     const e=find(ESS,k);
     if(d&&e&&!essDue(e,d))return;
-    if(k==="embrace"&&!(d&&d.date===today()&&hardNow(d)))return;
+    if(k==="embrace"&&!((d&&d.date===today()&&hardNow(d))||activeEpisodes(id).length||nsOf(id).long.length))return;
     const last=sentLast[k]||0,ago=Date.now()-last;
     if(last&&ago<60000){r.append(btn("nbtn sent","Надіслано ✓",()=>{}));return}
     if(last&&ago<NUDGE_GAP){
@@ -735,7 +782,7 @@ function closeShowForm(){if(pendingUrl)URL.revokeObjectURL(pendingUrl);$("showFo
 function renderState(d){
   const lvl=d.energy||0;
   document.querySelectorAll(".lvl").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.l===lvl)));
-  statusRow();emoMap(d);
+  statusRow();emoMap(d);nsRow();
   needRow(d);multiRow($("sleepChips"),SLEEP,"sleep",["good"]);chipRow($("headChips"),HEAD,"head");multiRow($("moodChips"),MOOD,"mood");
   const showPain=d.head==="pain"||d.head==="migraine",showSigns=d.head==="prodrome"||d.head==="migraine";
   $("painBox").hidden=!showPain;if(showPain)scaleRow($("painChips"),"pain");
@@ -751,6 +798,45 @@ async function setStatus(status,text){
   const {error}=await sb.from("profiles").update(patch).eq("id",uid);
   if(error)return syncErr(error);saved();
   if(status)sb.functions.invoke("notify",{body:{type:"status"}}).catch(()=>{});
+}
+async function setNs(next){
+  const p=myProfile();p.ns=next;render();
+  const {error}=await sb.from("profiles").update({ns:next}).eq("id",uid);
+  if(error)return syncErr(error);saved();
+}
+function toggleLong(k,text){
+  const ns=nsOf(uid),on=ns.long.some(l=>l.k===k&&(k!=="own"||l.text===text));
+  const long=on?ns.long.filter(l=>!(l.k===k&&(k!=="own"||l.text===text))):[...ns.long,{k,text:k==="own"?text:undefined,since:Date.now()}];
+  setNs({...ns,long});
+  if(!on)sb.functions.invoke("notify",{body:{type:"ns",what:"long",k}}).catch(()=>{});
+}
+function addEpisode(k){
+  const ns=nsOf(uid),cut=Date.now()-60*864e5;
+  const episodes=[...ns.episodes.filter(e=>e.ts>cut),{id:Date.now().toString(36),k,ts:Date.now()}].slice(-100);
+  setNs({...ns,episodes});
+  sb.functions.invoke("notify",{body:{type:"ns",what:"episode",k}}).catch(()=>{});
+}
+function patchEpisode(id,patch){const ns=nsOf(uid);setNs({...ns,episodes:ns.episodes.map(e=>e.id===id?Object.assign({},e,patch):e).filter(e=>!e.del)})}
+let epEdit=null;
+function nsRow(){
+  const ns=nsOf(uid),lb=$("nsLong");lb.replaceChildren();
+  NS_LONG.forEach(o=>{const on=ns.long.some(l=>l.k===o.k);const b=btn("chip warn",o.t,()=>toggleLong(o.k));b.setAttribute("aria-pressed",String(on));lb.append(b)});
+  ns.long.filter(l=>l.k==="own").forEach(l=>{const b=btn("chip warn",l.text,()=>toggleLong("own",l.text));b.setAttribute("aria-pressed","true");lb.append(b)});
+  if($("nsForm").hidden)lb.append(btn("chip add","+ Своє",()=>{$("nsForm").hidden=false;render();$("nsText").focus()}));
+  const eb=$("nsEp");eb.replaceChildren();
+  NS_EP.forEach(o=>eb.append(btn("chip","⚡ "+o.t,()=>addEpisode(o.k))));
+  const al=$("nsActive");al.replaceChildren();
+  activeEpisodes(uid).forEach(e=>{const info=epInfo(e.k);const li=el("li","item");const tx=el("div","txt");const inner=el("div",null,info.t);
+    const until=new Date(e.ts+info.h*3600e3);
+    inner.append(el("small",null,(epPhase(e)==="now"?"зараз":"відновлення")+" · до ~"+(until.toDateString()===new Date().toDateString()?hm(until):"завтра "+hm(until))));
+    tx.append(inner);li.append(tx);
+    if(epEdit===e.id){const inp=el("input","timein");inp.type="time";inp.value=hm(e.ts);inp.setAttribute("aria-label","Коли почалось");
+      inp.addEventListener("change",()=>{if(!inp.value)return;const [H,M]=inp.value.split(":").map(Number);const dt=new Date(e.ts);dt.setHours(H,M,0,0);if(dt>Date.now())dt.setDate(dt.getDate()-1);epEdit=null;patchEpisode(e.id,{ts:dt.getTime()})});
+      li.append(inp);setTimeout(()=>inp.focus(),0)}
+    else li.append(btn("timechip",hm(e.ts),()=>{epEdit=e.id;render()},"Змінити час"));
+    li.append(btn("ghost sm","Вже легше",()=>patchEpisode(e.id,{end:Date.now()})));
+    li.append(btn("del","×",()=>patchEpisode(e.id,{del:1}),"Прибрати, якщо випадково"));
+    al.append(li)});
 }
 function statusRow(){
   const p=myProfile(),box=$("statusChips");box.replaceChildren();
@@ -900,6 +986,7 @@ function renderStats(){
     ["Кошмари",cnt(h=>has(h.sleep,"nightmares"))],
     ["Сни",cnt(h=>has(h.sleep,"dreams"))],
     ["Мігрень або її наближення",cnt(h=>h.head==="migraine"||h.head==="prodrome")],
+    ["Епізоди (мелтдаун, шатдаун…)",nsOf(statWho).episodes.filter(e=>Date.now()-e.ts<statRange*864e5).length],
     ["Болить голова",cnt(h=>h.head==="pain")],
     ["Вода на день",avg("water")],
     ["Їжа на день",avg("food")],
@@ -1071,6 +1158,8 @@ $("whyForm").addEventListener("submit",e=>{
 $("toggleAll").addEventListener("click",()=>{showAll=!showAll;render()});
 $("needForm").addEventListener("submit",e=>{e.preventDefault();const text=$("needText").value.trim();if(!text)return;
   $("needText").value="";$("needForm").hidden=true;saveOwnNeed(text);saveMe({need:"own",needText:text})});
+$("nsForm").addEventListener("submit",e=>{e.preventDefault();const t=$("nsText").value.trim();if(!t)return;$("nsText").value="";$("nsForm").hidden=true;toggleLong("own",t)});
+$("nsCancel").addEventListener("click",()=>{$("nsText").value="";$("nsForm").hidden=true;render()});
 $("statusForm").addEventListener("submit",e=>{e.preventDefault();const t=$("statusText").value.trim();if(!t)return;
   $("statusText").value="";$("statusForm").hidden=true;setStatus("own",t)});
 $("statusCancel").addEventListener("click",()=>{$("statusText").value="";$("statusForm").hidden=true;render()});
@@ -1135,7 +1224,7 @@ function openEmoji(input,anchor){
   pop.style.top=(window.scrollY+(below?r.bottom+8:r.top-8-pop.offsetHeight))+"px";
 }
 document.addEventListener("click",e=>{if(!pop.hidden&&!pop.contains(e.target)&&!e.target.classList.contains("emojibtn"))pop.hidden=true});
-["why","newText","boxText","careText","needText","showCaption","planText","statusText"].forEach(id=>{const i=$(id);if(!i)return;const b=btn("emojibtn","☺",ev=>{ev.preventDefault();openEmoji(i,ev.currentTarget)},"Додати смайлик");i.after(b)});
+["why","newText","boxText","careText","needText","showCaption","planText","statusText","nsText"].forEach(id=>{const i=$(id);if(!i)return;const b=btn("emojibtn","☺",ev=>{ev.preventDefault();openEmoji(i,ev.currentTarget)},"Додати смайлик");i.after(b)});
 
 /* ---------- boot ---------- */
 setInterval(render,5*60*1000);

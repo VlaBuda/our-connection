@@ -353,3 +353,11 @@ dialog.setdlg{max-width:min(720px,calc(100vw - 24px));width:100%;min-height:min(
 .themebtn .caret{margin-left:auto;color:var(--muted)}
 .themedd .themes{max-height:46vh;overflow:auto;padding:2px}
 @media (max-width:500px){dialog.setdlg{padding:16px}.settabs button{font-size:.8rem;padding:9px 6px}}
+
+/* ---------- нервова система ---------- */
+.nsbox{display:flex;flex-direction:column;gap:10px;border-left:2px solid var(--low);padding-left:12px}
+.sub.small{font-size:.7rem;margin:2px 0 0}
+.nsblock{display:flex;flex-direction:column;gap:8px}
+.nsrow{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.fact.ep{font-weight:700}
+#nsActive .timechip{flex:none}

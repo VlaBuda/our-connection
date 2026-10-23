@@ -124,6 +124,16 @@
         <div class="emowords" id="emoWords"></div>
         <p class="emoinfo" id="emoInfo" aria-live="polite"></p>
       </div>
+      <div class="nsbox">
+        <p class="sub">Нервова система</p>
+        <p class="hint">Тривалий стан видно, доки не знімеш. Епізод відмічай, коли стався: партнер бачитиме його і час відновлення після нього.</p>
+        <p class="sub small">Тривалий стан</p>
+        <div class="chips" id="nsLong"></div>
+        <form id="nsForm" class="inline" hidden><input type="text" id="nsText" maxlength="60" placeholder="Своїми словами" autocomplete="off" aria-label="Свій тривалий стан"><button class="btn" type="submit">Додати</button><button class="link" type="button" id="nsCancel">Скасувати</button></form>
+        <p class="sub small">Епізод: щойно було або є зараз</p>
+        <div class="chips" id="nsEp"></div>
+        <ul class="list" id="nsActive"></ul>
+      </div>
       <p class="sub">Через що <span class="opt">можна кілька, кожну окремо</span></p>
       <form id="whyForm" class="inline"><input type="text" id="why" placeholder="Наприклад: не виспалась, багато роботи" autocomplete="off" aria-label="Причина"><button class="btn" type="submit">Додати</button></form>
       <ul class="list" id="whyList"></ul>

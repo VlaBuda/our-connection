@@ -2,6 +2,7 @@
 //  - {type:"nudge", kind}          from the app: partner presses "нагадати попити" etc.
 //  - {type:"thanks", id}           from the app: I answered my partner's nudge ("Пʼю воду")
 //  - {type:"show", caption}        from the app: I shared a photo in "Хочу тобі показати"
+//  - {type:"ns", what, k}         from the app: "Нервова система" long state or episode
 //  - {type:"status"}               from the app: I changed "Що я зараз роблю" (push only for military statuses)
 //  - {type:"plan", id, event}      from the app: "Наш час" — new plan, "я за", new time
 //  - {type:"state", dir, changes}  from the app: my state changed (dir = "better" | "worse" | absent)
@@ -184,7 +185,7 @@ function stateLines(d: Record<string, unknown>) {
   if (d.energy === 1) lines.push("сил майже немає");
   if (d.unsure) lines.push("не розуміє свій стан");
   const heavy: Record<string, string> = {
-    panic: "паніка", rage: "лють", shutdown: "шатдаун", depressed: "пригніченість", empty: "порожнеча",
+    panic: "паніка", rage: "лють", shutdown: "шатдаун", meltdown: "мелтдаун", panic_attack: "панічна атака", depressed: "пригніченість", empty: "порожнеча",
     apathy: "апатія", hopeless: "безнадія", despair: "відчай", grief: "горе", burnout: "вигорання",
   };
   for (const k of Object.keys(heavy)) if (has(d.emo, k)) lines.push(heavy[k]);
@@ -243,6 +244,36 @@ Deno.serve(async (req) => {
       body: caption ? `Хоче тобі показати: ${caption}` : "Хоче тобі щось показати 📷",
       tag: "show",
     });
+    return json({ ok: true });
+  }
+
+  if (body.type === "ns") {
+    // "Нервова система": a long state was set or an episode happened. Words match NS_LONG / NS_EP in app.js.
+    const LONG: Record<string, string> = {
+      burnout: "емоційне вигорання", aut_burnout: "аутистичне вигорання", depressive: "депресивний період",
+      anxious: "тривожний період", overload: "хронічне перевантаження",
+    };
+    const EP: Record<string, string> = {
+      shutdown: "шатдаун. Може не відповідати, одне тепле повідомлення без питань",
+      meltdown: "мелтдаун. Зараз потрібно менше слів і тиша",
+      panic_attack: "панічна атака. Якщо можеш: «я тут, це мине»",
+      sensory: "сенсорне перевантаження. Краще текст, ніж дзвінок",
+      flashback: "флешбек. Коротко: зараз інший час, ти поряд",
+      freeze: "параліч дій. Допоможе один крихітний крок разом",
+    };
+    const k = String(body.k);
+    let text = "";
+    if (body.what === "episode" && EP[k]) text = EP[k];
+    else if (body.what === "long") {
+      const ns = (me.ns ?? {}) as { long?: { k: string; text?: string }[] };
+      const l = (ns.long ?? []).find((x) => x.k === k);
+      if (!l) return json({ ok: true, note: "not set" });
+      text = k === "own" ? String(l.text ?? "").slice(0, 80) : LONG[k] ?? "";
+      if (text) text = "зараз у стані: " + text;
+    }
+    if (!text) return json({ ok: true, note: "nothing to send" });
+    if (!(await allow(user.id, "ns:" + k, 2))) return json({ ok: true, note: "too soon" });
+    await pushTo(partner.id, { title: name, body: text, tag: "ns" });
     return json({ ok: true });
   }
 
