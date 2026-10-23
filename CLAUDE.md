@@ -29,7 +29,7 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
   sends a reminder to both ~30 min before `at`.
 - Status "Що я зараз роблю" on `profiles` (status key or 'own' + status_text, status_at, status_set civil|military);
   lists in `STATUS` (app.js); push to partner only for military statuses.
-- Emotion map (How We Feel style, `EMO`/`EMO_Q` in app.js): `days.data.emo[]` (≤3) + `unsure` flag.
+- Emotion map (How We Feel style, ~80 words in `EMO` with intensity i 1–3, quadrant first, search): `days.data.emo[]` (≤5) + `unsure` flag.
   `hardNow()` decides when the partner's card offers the "embrace" nudge.
 - Own "що мені треба": `days.data.need = "own"` + `needText`; saved list in `private_items` id `needs_own`.
 
@@ -46,6 +46,7 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
 - Her colour red, his yellow. 13 themes in `THEMES` (app.js); images in `themes/` with `-sm` previews
   and AI-upscaled `-hd` versions used on screens ≥900px (`HD_READY`).
 - Emoji picker on text inputs.
+- Settings dialog has tabs (Про мене · Вигляд · Сповіщення · Пара); theme picker is a dropdown with previews.
 
 ## Ideas not done yet
 - Fun personality quizzes ("яка я дівчина?" style) — user will pick the format later.

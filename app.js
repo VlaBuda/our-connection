@@ -114,48 +114,95 @@ const EMO_Q={
   blue:{t:"Мало енергії, неприємно",tip:"Сил і радості мало. Не треба підбадьорювати чи виправляти: «я поряд, можеш не відповідати» вже допомагає."},
   green:{t:"Мало енергії, приємно",tip:"Спокійний момент. Можна просто побути поряд, без планів."},
 };
+// i = intensity: 1 трохи, 2 помітно, 3 сильно. Keys are stored in days.data.emo, so never rename them.
+const E=(q,i,k,t,d)=>({q,i,k,t,d});
 const EMO=[
-  // red: mild → intense
-  {k:"uneasy",q:"red",t:"Неспокій",d:"Щось муляє, але не зовсім зрозуміло що."},
-  {k:"irritated",q:"red",t:"Роздратування",d:"Дрібниці чіпляють сильніше, ніж зазвичай."},
-  {k:"tense",q:"red",t:"Напруга",d:"Тіло і голова в режимі «насторожі», важко розслабитись."},
-  {k:"anxious",q:"red",t:"Тривога",d:"Думки біжать наперед і малюють погані варіанти."},
-  {k:"overwhelmed",q:"red",t:"Перевантаження",d:"Забагато всього одночасно: звуків, справ, людей, думок."},
-  {k:"angry",q:"red",t:"Злість",d:"Щось перетнуло межу або здається несправедливим."},
-  {k:"scared",q:"red",t:"Страх",d:"Відчуття загрози, за себе чи за когось."},
-  {k:"panic",q:"red",t:"Паніка",d:"Страх накриває хвилею, важко дихати і думати."},
-  {k:"rage",q:"red",t:"Лють",d:"Злість настільки сильна, що важко її втримати."},
-  // yellow
-  {k:"curious",q:"yellow",t:"Цікавість",d:"Хочеться дізнатися, спробувати, розібратись."},
-  {k:"cheerful",q:"yellow",t:"Бадьорість",d:"Є сили і легкість рухатися."},
-  {k:"playful",q:"yellow",t:"Грайливість",d:"Хочеться жартувати, дуріти, бавитись."},
-  {k:"glad",q:"yellow",t:"Радість",d:"Тепло й добре від того, що відбувається."},
-  {k:"proud",q:"yellow",t:"Гордість",d:"Щось вийшло, і це приємно визнати."},
-  {k:"confident",q:"yellow",t:"Впевненість",d:"Відчуття, що впораєшся."},
-  {k:"inspired",q:"yellow",t:"Натхнення",d:"Зʼявились ідеї і бажання їх робити."},
-  {k:"excited",q:"yellow",t:"Захват",d:"Дуже радісно, аж переповнює."},
-  {k:"euphoric",q:"yellow",t:"Ейфорія",d:"Пік радості, все здається можливим."},
-  // blue
-  {k:"bored",q:"blue",t:"Нудьга",d:"Нічого не чіпляє, час тягнеться."},
-  {k:"confused",q:"blue",t:"Розгубленість",d:"Незрозуміло, що робити і що відчуваєш."},
-  {k:"drained",q:"blue",t:"Виснаження",d:"Сили закінчились, навіть прості речі даються важко."},
-  {k:"sad",q:"blue",t:"Сум",d:"Чогось шкода або когось бракує."},
-  {k:"lonely",q:"blue",t:"Самотність",d:"Бракує близькості й відчуття, що поруч хтось є."},
-  {k:"guilty",q:"blue",t:"Провина і сором",d:"Відчуття, що зробили щось не так або що з тобою щось не так."},
-  {k:"apathy",q:"blue",t:"Апатія",d:"Нічого не хочеться і нічого не важливо. Це не лінь, це спосіб психіки зберегти сили."},
-  {k:"empty",q:"blue",t:"Порожнеча",d:"Ніби всередині вимкнули звук: ні радості, ні суму."},
-  {k:"depressed",q:"blue",t:"Пригніченість",d:"Важко, темно й безнадійно, ніби так буде завжди. Якщо триває тижнями, варто поговорити з фахівцем."},
-  // green
-  {k:"calm",q:"green",t:"Спокій",d:"Нічого не тисне, можна просто бути."},
-  {k:"relaxed",q:"green",t:"Розслабленість",d:"Тіло відпускає напругу."},
-  {k:"cozy",q:"green",t:"Затишок",d:"Тепло, мʼяко, безпечно."},
-  {k:"grateful",q:"green",t:"Вдячність",d:"Хочеться подякувати за те, що є."},
-  {k:"relieved",q:"green",t:"Полегшення",d:"Щось важке скінчилось або вирішилось."},
-  {k:"tender",q:"green",t:"Ніжність",d:"Хочеться піклуватися й обіймати."},
-  {k:"safe",q:"green",t:"Безпека",d:"Відчуття, що зараз нічого не загрожує."},
-  {k:"content",q:"green",t:"Задоволення",d:"Все достатньо добре, нічого не бракує."},
-  {k:"serene",q:"green",t:"Умиротворення",d:"Глибокий тихий спокій."},
+  E("red",1,"uneasy","Неспокій","Щось муляє, але не зовсім зрозуміло що."),
+  E("red",1,"irritated","Роздратування","Дрібниці чіпляють сильніше, ніж зазвичай."),
+  E("red",1,"impatient","Нетерплячість","Хочеться, щоб усе сталося швидше, чекати важко."),
+  E("red",1,"awkward","Ніяковість","Незручно, хочеться сховатися від чужих поглядів."),
+  E("red",1,"restless","Метушливість","Не всидиш на місці, тіло шукає, куди себе подіти."),
+  E("red",2,"tense","Напруга","Тіло і голова в режимі «насторожі», важко розслабитись."),
+  E("red",2,"anxious","Тривога","Думки біжать наперед і малюють погані варіанти."),
+  E("red",2,"stressed","Стрес","Вимог більше, ніж сил, і це тисне."),
+  E("red",2,"frustrated","Фрустрація","Хочеш, але не виходить, і від цього злість."),
+  E("red",2,"guarded","Насторожі","Чекаєш критики чи нападу, готовність захищатися."),
+  E("red",2,"overstimulated","Сенсорне перевантаження","Звуки, світло, дотики, запахи стали занадто гучними. Потрібна тиша і менше подразників."),
+  E("red",2,"resentful","Образа","Несправедливо повелися, і це не відпускає."),
+  E("red",2,"jealous","Ревнощі","Страх втратити близьку людину чи її увагу."),
+  E("red",2,"envious","Заздрість","Хочеться того, що є в інших, і від цього гірко."),
+  E("red",3,"overwhelmed","Перевантаження","Забагато всього одночасно: справ, людей, думок."),
+  E("red",3,"angry","Злість","Щось перетнуло межу або здається несправедливим."),
+  E("red",3,"scared","Страх","Відчуття загрози, за себе чи за когось."),
+  E("red",3,"disgust","Огида","Хочеться відштовхнути щось чи когось від себе."),
+  E("red",3,"shock","Шок","Щось сталося раптово, і думки ніби зупинились."),
+  E("red",3,"panic","Паніка","Страх накриває хвилею, важко дихати і думати."),
+  E("red",3,"rage","Лють","Злість настільки сильна, що важко її втримати."),
+
+  E("yellow",1,"curious","Цікавість","Хочеться дізнатися, спробувати, розібратись."),
+  E("yellow",1,"cheerful","Бадьорість","Є сили і легкість рухатися."),
+  E("yellow",1,"amused","Веселощі","Щось смішить, хочеться сміятися."),
+  E("yellow",1,"focused","Зосередженість","Голова ясна, справа йде."),
+  E("yellow",1,"hopeful","Надія","Віриться, що буде краще."),
+  E("yellow",2,"playful","Грайливість","Хочеться жартувати, дуріти, бавитись."),
+  E("yellow",2,"glad","Радість","Тепло й добре від того, що відбувається."),
+  E("yellow",2,"proud","Гордість","Щось вийшло, і це приємно визнати."),
+  E("yellow",2,"confident","Впевненість","Відчуття, що впораєшся."),
+  E("yellow",2,"motivated","Вмотивованість","Хочеться братися і робити."),
+  E("yellow",2,"uplifted","Піднесення","Настрій злітає вгору, все дається легше."),
+  E("yellow",2,"infatuated","Закоханість","Метелики всередині, тягне до людини."),
+  E("yellow",3,"anticipation","Передчуття","Чекаєш чогось доброго, аж не терпиться."),
+  E("yellow",3,"inspired","Натхнення","Зʼявились ідеї і бажання їх робити."),
+  E("yellow",3,"hyperfocus","Гіперфокус","Неможливо відірватися, світ навколо зник. Приємно, але легко забути про їжу, воду й сон."),
+  E("yellow",3,"excited","Захват","Дуже радісно, аж переповнює."),
+  E("yellow",3,"euphoric","Ейфорія","Пік радості, все здається можливим."),
+
+  E("blue",1,"bored","Нудьга","Нічого не чіпляє, час тягнеться."),
+  E("blue",1,"confused","Розгубленість","Незрозуміло, що робити і що відчуваєш."),
+  E("blue",1,"tired","Втома","Хочеться відпочити, але ще тримаєшся."),
+  E("blue",1,"disappointed","Розчарування","Чекалось інакше, і від цього прикро."),
+  E("blue",1,"insecure","Невпевненість","Здається, що робиш недостатньо добре або недостатньо вмієш."),
+  E("blue",1,"detached","Відстороненість","Ніби дивишся на життя крізь скло."),
+  E("blue",2,"sad","Сум","Чогось шкода або когось бракує."),
+  E("blue",2,"longing","Туга","Сумуєш за кимось чи чимось далеким. Хочеться, щоб людина була поруч."),
+  E("blue",2,"lonely","Самотність","Бракує близькості й відчуття, що поруч хтось є."),
+  E("blue",2,"hurt","Скривдженість","Хтось зачепив, і болить."),
+  E("blue",2,"guilty","Провина","Відчуття, що зробили щось не так і винні."),
+  E("blue",2,"ashamed","Сором","Відчуття, що з тобою самим(ою) щось не так. Хочеться сховатися."),
+  E("blue",2,"vulnerable","Вразливість","Ніби без шкаралупи: будь-що може поранити."),
+  E("blue",2,"helpless","Безсилля","Хочеться щось змінити, але нічого не можеш."),
+  E("blue",2,"drained","Виснаження","Сили закінчились, навіть прості речі даються важко."),
+  E("blue",3,"numb","Заціпеніння","Ніби вимкнулись почуття й тіло, щоб не боліло."),
+  E("blue",3,"shutdown","Шатдаун","Мозок вимикається від перевантаження: важко говорити, думати й рухатись. Потрібні тиша і час."),
+  E("blue",3,"burnout","Вигорання","Довго тягнеш більше, ніж можна. Відпочинок уже не відновлює, як раніше."),
+  E("blue",3,"apathy","Апатія","Нічого не хочеться і нічого не важливо. Це не лінь, це спосіб психіки зберегти сили."),
+  E("blue",3,"empty","Порожнеча","Ніби всередині вимкнули звук: ні радості, ні суму."),
+  E("blue",3,"betrayed","Зрада","Довіру порушили, і дуже боляче."),
+  E("blue",3,"grief","Горе","Втрата, яка болить усім тілом."),
+  E("blue",3,"hopeless","Безнадія","Не видно виходу і сенсу намагатися."),
+  E("blue",3,"depressed","Пригніченість","Важко, темно, ніби так буде завжди. Якщо триває тижнями, варто поговорити з фахівцем."),
+  E("blue",3,"despair","Відчай","Нестерпно, і здається, що нічого не допоможе."),
+
+  E("green",1,"calm","Спокій","Нічого не тисне, можна просто бути."),
+  E("green",1,"relaxed","Розслабленість","Тіло відпускає напругу."),
+  E("green",1,"content","Задоволення","Все достатньо добре, нічого не бракує."),
+  E("green",1,"balanced","Рівновага","Нічого не хитає, стоїш рівно."),
+  E("green",1,"sleepy","Приємна сонливість","Тіло мʼяко хоче спати."),
+  E("green",2,"cozy","Затишок","Тепло, мʼяко, безпечно."),
+  E("green",2,"grateful","Вдячність","Хочеться подякувати за те, що є."),
+  E("green",2,"relieved","Полегшення","Щось важке скінчилось або вирішилось."),
+  E("green",2,"tender","Ніжність","Хочеться піклуватися й обіймати."),
+  E("green",2,"safe","Безпека","Відчуття, що зараз нічого не загрожує."),
+  E("green",2,"trust","Довіра","Можна спертися і не перевіряти."),
+  E("green",2,"accepted","Прийнятість","Тебе приймають таким(ою), який(а) ти є."),
+  E("green",2,"close","Близькість","Відчуваєш звʼязок з людиною, навіть на відстані."),
+  E("green",2,"loved","Любов","Тепле відчуття, що тебе люблять і ти любиш."),
+  E("green",2,"nostalgic","Ностальгія","Тепло-сумні спогади про добре минуле."),
+  E("green",3,"fulfilled","Наповненість","Ніби всього досить, усередині повно."),
+  E("green",3,"serene","Умиротворення","Глибокий тихий спокій."),
+  E("green",3,"blissful","Блаженство","Дуже добре, тихо і повно водночас."),
 ];
+const EMO_MAX=5,EMO_LVL={1:"Трохи",2:"Помітно",3:"Сильно"};
 const emoOf=k=>EMO.find(e=>e.k===k);
 const PLAN_KIND={game:{i:"🎮",t:"Гра"},watch:{i:"🎬",t:"Перегляд"},call:{i:"📞",t:"Розмова"},other:{i:"✨",t:"Інше"}};
 // State history within a day: what each field reads like, for the log on the cards and in pushes.
@@ -451,7 +498,9 @@ function stateRows(d){
     const qs=[...new Set(em.map(e=>e.q))];
     const t=qs.map(q=>EMO_Q[q].tip);
     if(d.unsure)t.unshift("Сам(а) не розуміє, що відчуває. Не питай «що сталося», краще запропонуй побути поряд або обійми.");
-    if(em.some(e=>e.k==="depressed"||e.k==="empty"))t.push("Якщо так уже кілька днів, мʼяко запропонуй поговорити з фахівцем. Без тиску.");
+    if(em.some(e=>["shutdown","overstimulated","overwhelmed"].includes(e.k)))t.push("Перевантаження: менше слів і звуків, текст замість дзвінка, не чекай відповіді.");
+    if(em.some(e=>e.k==="longing"||e.k==="lonely"))t.push("Бракує тебе. Голосове, фото чи «я тут» зараз важать більше, ніж здається.");
+    if(em.some(e=>["depressed","empty","hopeless","despair","burnout"].includes(e.k)))t.push("Якщо так уже кілька днів, мʼяко запропонуй поговорити з фахівцем. Без тиску.");
     rows.push({f:"emo",label:"Відчуття: "+fieldText("emo",d),alert:qs.some(q=>q==="red"||q==="blue")||!!d.unsure,tips:t,emo:em});
   }
   ESS.forEach(e=>{const a=d[e.k]||[];rows.push({label:e.t+": "+(a.length?a.length+", востаннє о "+hm(Math.max(...a)):"ще не було"),alert:essDue(e,d),tips:[],ess:e.k})});
@@ -710,28 +759,48 @@ function statusRow(){
   if(p.status==="own"&&p.status_text){const b=btn("chip","📍 "+p.status_text,()=>setStatus(null));b.setAttribute("aria-pressed","true");box.append(b)}
   if($("statusForm").hidden)box.append(btn("chip add","+ Своє",()=>{$("statusForm").hidden=false;render();$("statusText").focus()}));
 }
+// How We Feel style: pick a colour (energy × pleasantness) first, then the word.
 function emoMap(d){
   const open=!!d.unsure||emoOpen;
   $("unsureBtn").setAttribute("aria-pressed",String(!!d.unsure));
   $("emoBox").hidden=!open;
   if(!open)return;
-  const sel=arr(d.emo),grid=$("emoGrid");grid.replaceChildren();
+  const sel=arr(d.emo).filter(emoOf);
+  const pick=e=>{emoInfo=e.k;const on=sel.includes(e.k);
+    if(!on&&sel.length>=EMO_MAX){emoInfo="__max";render();return}
+    saveMe({emo:on?sel.filter(x=>x!==e.k):[...sel,e.k]})};
+  const word=e=>{const b=btn("emo-w t"+e.i+" q-"+e.q,e.t,()=>pick(e));b.setAttribute("aria-pressed",String(sel.includes(e.k)));return b};
+  // chosen
+  const ch=$("emoChosen");ch.replaceChildren();
+  sel.forEach(k=>{const e=emoOf(k);ch.append(btn("emo-w t2 q-"+e.q+" chosen",e.t+" ×",()=>pick(e),"Прибрати «"+e.t+"»"))});
+  // quadrants
+  const grid=$("emoGrid");grid.replaceChildren();
   ["red","yellow","blue","green"].forEach(q=>{
-    const list=EMO.filter(e=>e.q===q),tiers=[list.slice(0,3),list.slice(3,6),list.slice(6,9)];
-    // Intense feelings sit at the outer edges: top rows for the upper quadrants, bottom rows for the lower ones.
-    const rows=(q==="red"||q==="yellow")?[tiers[2],tiers[1],tiers[0]]:tiers;
-    const qd=el("div","emoq q-"+q);qd.setAttribute("aria-label",EMO_Q[q].t);
-    rows.forEach((row,ri)=>{const lvl=(q==="red"||q==="yellow")?2-ri:ri;const rd=el("div","emorow");qd.append(rd);
-      (q==="red"||q==="blue"?row:[...row].reverse()).forEach(e=>{const on=sel.includes(e.k);
-        const b=btn("emo-w t"+lvl,e.t,()=>{emoInfo=e.k;const next=on?sel.filter(x=>x!==e.k):[...sel,e.k].slice(-3);saveMe({emo:next})});
-        b.setAttribute("aria-pressed",String(on));rd.append(b)})});
-    grid.append(qd);
+    const n=sel.filter(k=>emoOf(k).q===q).length;
+    const b=btn("emoq q-"+q,"",()=>{emoQ=emoQ===q?null:q;$("emoSearch").value="";render()});
+    b.setAttribute("aria-pressed",String(emoQ===q));
+    b.append(el("b",null,EMO_Q[q].t),el("small",null,EMO.filter(e=>e.q===q&&e.i===2).slice(0,3).map(e=>e.t.toLowerCase()).join(", ")+"…"));
+    if(n)b.append(el("span","emocount",String(n)));
+    grid.append(b);
   });
-  const inf=$("emoInfo");const e=emoOf(emoInfo)||emoOf(sel[sel.length-1]);
-  inf.replaceChildren();
-  if(e){inf.append(el("b","q-"+e.q,e.t),document.createTextNode(" — "+e.d))}
-  else inf.textContent="Торкнись слова, яке хоч трохи схоже. Можна до трьох. Тут зʼявиться, що воно означає.";
+  // words: search across all, or the open quadrant by intensity
+  const words=$("emoWords");words.replaceChildren();
+  const qtxt=$("emoSearch").value.trim().toLowerCase();
+  if(qtxt){
+    const found=EMO.filter(e=>e.t.toLowerCase().includes(qtxt)||e.d.toLowerCase().includes(qtxt));
+    const r=el("div","emorow");found.forEach(e=>r.append(word(e)));words.append(r);
+    if(!found.length)words.append(el("p","empty","Такого слова немає. Можна описати своїми словами в «Через що»."));
+  }else if(emoQ){
+    [1,2,3].forEach(i=>{const list=EMO.filter(e=>e.q===emoQ&&e.i===i);if(!list.length)return;
+      const g=el("div","emotier");g.append(el("span","sub",EMO_LVL[i]));const r=el("div","emorow");list.forEach(e=>r.append(word(e)));g.append(r);words.append(g)});
+  }
+  const inf=$("emoInfo");inf.replaceChildren();
+  const e=emoInfo==="__max"?null:emoOf(emoInfo)||emoOf(sel[sel.length-1]);
+  if(emoInfo==="__max")inf.textContent="Вже вибрано "+EMO_MAX+". Прибери одне, щоб додати інше.";
+  else if(e)inf.append(el("b","q-"+e.q,e.t),document.createTextNode(" — "+e.d));
+  else inf.textContent=emoQ||qtxt?"Торкнись слова, яке хоч трохи схоже. Тут зʼявиться, що воно означає.":"Обери колір: скільки зараз енергії і наскільки приємно. Потім слово.";
 }
+let emoQ=null;
 let emoOpen=false,emoInfo=null;
 // "Що мені зараз треба": built-in options, my own saved ones (synced, private) and "+ Своє".
 const ownNeeds=()=>((priv.get("needs_own")||{}).list)||[];
@@ -961,8 +1030,11 @@ function renderSettings(){
   [["civil","Цивільні"],["military","Військові"]].forEach(([k,t])=>{const b=btn("chip",t,async()=>{
     const {error}=await sb.from("profiles").update({status_set:k}).eq("id",uid);if(error)return syncErr(error);
     await loadProfiles();renderSettings();render()});b.setAttribute("aria-pressed",String((p.status_set||"civil")===k));ss.append(b)});
+  const tb=$("themeBtn"),cur=THEMES[themeKey()]||THEMES.apothecary;tb.replaceChildren();
+  const ti=el("span","themeimg");ti.style.backgroundImage='url("'+cur.sm+'")';
+  tb.append(ti,el("span",null,cur.t),el("span","caret",$("setTheme").hidden?"▾":"▴"));
   themeRow($("setTheme"),themeKey(),async k=>{
-    ls("theme",k);applyTheme(k);
+    ls("theme",k);applyTheme(k);$("setTheme").hidden=true;tb.setAttribute("aria-expanded","false");
     const {error}=await sb.from("profiles").update({theme:k}).eq("id",uid);
     if(!error)await loadProfiles();
     renderSettings();
@@ -970,13 +1042,21 @@ function renderSettings(){
 }
 $("openSettings").addEventListener("click",async()=>{
   const p=myProfile();$("setName").value=p.name||"";
-  renderSettings();renderPushState();
+  $("setTheme").hidden=true;$("themeBtn").setAttribute("aria-expanded","false");
+  setPane(ls("setPane")||"me");renderSettings();renderPushState();
   if(p.couple_id){const {data}=await sb.rpc("my_invite_code");$("pairInfo").textContent=partnerId()?"Ви зʼєднані з "+nm(partnerId())+". Код пари: "+data:"Код для твоєї людини: "+data}
   else $("pairInfo").textContent="Пари ще немає. Вийди й увійди знову, щоб створити або приєднатися.";
   $("settings").showModal();
 });
 $("setName").addEventListener("change",async()=>{await sb.from("profiles").update({name:$("setName").value.trim()}).eq("id",uid);await loadProfiles();render()});
 $("closeSettings").addEventListener("click",()=>$("settings").close());
+function setPane(k){
+  document.querySelectorAll(".setpane").forEach(p=>p.hidden=p.dataset.setpane!==k);
+  document.querySelectorAll(".settabs button").forEach(b=>b.setAttribute("aria-current",String(b.dataset.set===k)));
+  ls("setPane",k);
+}
+document.querySelectorAll(".settabs button").forEach(b=>b.addEventListener("click",()=>setPane(b.dataset.set)));
+$("themeBtn").addEventListener("click",()=>{const th=$("setTheme");th.hidden=!th.hidden;$("themeBtn").setAttribute("aria-expanded",String(!th.hidden));renderSettings()});
 $("pushOn").addEventListener("click",enablePush);
 $("pushOn2").addEventListener("click",enablePush);
 $("pushLater").addEventListener("click",()=>{ls("pushLater",today());renderPushBanner()});
@@ -995,6 +1075,7 @@ $("statusForm").addEventListener("submit",e=>{e.preventDefault();const t=$("stat
   $("statusText").value="";$("statusForm").hidden=true;setStatus("own",t)});
 $("statusCancel").addEventListener("click",()=>{$("statusText").value="";$("statusForm").hidden=true;render()});
 $("unsureBtn").addEventListener("click",()=>{const on=!myToday().unsure;emoOpen=on;saveMe({unsure:on})});
+$("emoSearch").addEventListener("input",()=>render());
 $("emoToggle").addEventListener("click",()=>{emoOpen=!emoOpen||!!myToday().unsure;render()});
 $("planForm").addEventListener("submit",async e=>{
   e.preventDefault();const title=$("planText").value.trim(),cid=myProfile().couple_id;if(!title||!cid)return;

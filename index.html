@@ -117,9 +117,11 @@
       <div class="chips" id="moodChips"></div>
       <div class="row unsure"><button class="chip warn" type="button" id="unsureBtn" aria-pressed="false">🌀 Не розумію свій стан</button><button class="link" type="button" id="emoToggle">Підібрати точніше слово</button></div>
       <div id="emoBox" class="emobox" hidden>
-        <p class="hint">Два питання: скільки зараз енергії (верх більше, низ менше) і наскільки приємно (ліворуч неприємно, праворуч приємно). Чим далі від центру, тим сильніше.</p>
-        <div class="emomap"><span class="ax ax-up">↑ більше енергії</span><div class="emogrid" id="emoGrid"></div><span class="ax ax-dn">↓ менше енергії</span>
+        <div class="emochosen" id="emoChosen"></div>
+        <div class="emomap"><span class="ax">↑ більше енергії</span><div class="emogrid" id="emoGrid"></div><span class="ax">↓ менше енергії</span>
           <div class="axh"><span>← неприємно</span><span>приємно →</span></div></div>
+        <input type="search" id="emoSearch" placeholder="Або знайди слово: туга, сором, шатдаун…" autocomplete="off" aria-label="Знайти відчуття">
+        <div class="emowords" id="emoWords"></div>
         <p class="emoinfo" id="emoInfo" aria-live="polite"></p>
       </div>
       <p class="sub">Через що <span class="opt">можна кілька, кожну окремо</span></p>
@@ -203,18 +205,37 @@
   </div>
 </div>
 
-<dialog id="settings">
+<dialog id="settings" class="setdlg">
   <div class="settings">
-    <h2>Налаштування</h2>
-    <div class="field"><label for="setName">Як тебе називати</label><input type="text" id="setName" maxlength="30"></div>
-    <div class="field"><label>Твій колір</label><div class="colors" id="setColor"></div></div>
-    <div class="field"><label>Мої статуси «Що я зараз роблю»</label><div class="chips" id="setStatusSet"></div></div>
-    <div class="field"><label>Тема</label><div class="themes" id="setTheme"></div></div>
-    <div class="row"><span id="pushState" class="hint"></span><button class="btn" id="pushOn" type="button">Увімкнути сповіщення</button></div>
-    <div class="field"><label>Пара</label><p class="hint" id="pairInfo"></p></div>
-    <div class="row">
-      <button class="ghost" id="logout" type="button">Вийти</button>
-      <button class="btn" id="closeSettings" type="button">Готово</button>
+    <div class="row sethead"><h2>Налаштування</h2><button class="btn" id="closeSettings" type="button">Готово</button></div>
+    <nav class="settabs" aria-label="Розділи налаштувань">
+      <button type="button" data-set="me">Про мене</button>
+      <button type="button" data-set="look">Вигляд</button>
+      <button type="button" data-set="push">Сповіщення</button>
+      <button type="button" data-set="pair">Пара</button>
+    </nav>
+    <div class="setpane" data-setpane="me">
+      <div class="field"><label for="setName">Як тебе називати</label><input type="text" id="setName" maxlength="30"></div>
+      <div class="field"><label>Твій колір</label><p class="hint">Так тебе видно на картках і в історії.</p><div class="colors" id="setColor"></div></div>
+      <div class="field"><label>Статуси «Що я зараз роблю»</label><p class="hint">Військові статуси надсилають партнеру сповіщення, цивільні просто видно на картці.</p><div class="chips" id="setStatusSet"></div></div>
+    </div>
+    <div class="setpane" data-setpane="look" hidden>
+      <div class="field"><label>Тема</label><p class="hint">Тлом для тебе і для твоєї картки в партнера.</p>
+        <div class="themedd">
+          <button type="button" class="themebtn" id="themeBtn" aria-expanded="false" aria-controls="setTheme"></button>
+          <div class="themes" id="setTheme" hidden></div>
+        </div>
+      </div>
+    </div>
+    <div class="setpane" data-setpane="push" hidden>
+      <div class="field"><label>Сповіщення на цьому пристрої</label>
+        <div class="row"><span id="pushState" class="hint"></span><button class="btn" id="pushOn" type="button">Увімкнути сповіщення</button></div>
+        <p class="hint">Вмикається окремо на кожному телефоні чи ноутбуці.</p>
+      </div>
+    </div>
+    <div class="setpane" data-setpane="pair" hidden>
+      <div class="field"><label>Пара</label><p class="hint" id="pairInfo"></p></div>
+      <div class="row"><button class="ghost" id="logout" type="button">Вийти з акаунта</button></div>
     </div>
   </div>
 </dialog>

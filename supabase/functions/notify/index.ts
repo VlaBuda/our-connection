@@ -183,7 +183,10 @@ function stateLines(d: Record<string, unknown>) {
   else if (d.head === "prodrome") lines.push("наближається мігрень");
   if (d.energy === 1) lines.push("сил майже немає");
   if (d.unsure) lines.push("не розуміє свій стан");
-  const heavy: Record<string, string> = { panic: "паніка", rage: "лють", depressed: "пригніченість", empty: "порожнеча", apathy: "апатія" };
+  const heavy: Record<string, string> = {
+    panic: "паніка", rage: "лють", shutdown: "шатдаун", depressed: "пригніченість", empty: "порожнеча",
+    apathy: "апатія", hopeless: "безнадія", despair: "відчай", grief: "горе", burnout: "вигорання",
+  };
   for (const k of Object.keys(heavy)) if (has(d.emo, k)) lines.push(heavy[k]);
   if (has(d.mood, "cry")) lines.push("хочеться плакати");
   else if (has(d.mood, "scared")) lines.push("страшно");
