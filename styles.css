@@ -361,3 +361,15 @@ dialog.setdlg{max-width:min(720px,calc(100vw - 24px));width:100%;min-height:min(
 .nsrow{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
 .fact.ep{font-weight:700}
 #nsActive .timechip{flex:none}
+
+/* ---------- food kinds, recovery, watch ---------- */
+.foodbtns{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%}
+.esstop{flex-wrap:wrap}
+.kindsel{padding:4px 8px;border-radius:8px;font-size:.85rem;background:transparent}
+.epset{display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%}
+.epset select{flex:0 1 auto;padding:7px 10px;font-size:.88rem}
+.epset input{flex:1 1 220px;padding:8px 12px;font-size:.9rem}
+#nsActive .item{flex-wrap:wrap}
+.lastseen{color:var(--muted);font-size:.8rem;margin-top:-6px}
+.watchrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.watchrow .nbtn{font-weight:500;font-size:.8rem}

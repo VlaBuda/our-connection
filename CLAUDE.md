@@ -34,6 +34,10 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
 - "Нервова система" on `profiles.ns` {long:[{k,text?,since}], episodes:[{id,k,ts,end?}]}: long states (burnout, autistic
   burnout…) stay until removed; episodes (`NS_EP`: shutdown, meltdown, panic attack…) show "now" tips for 1 h, then
   "after" tips until `h` hours pass or "Вже легше". Push type "ns".
+- Episode recovery is configurable: `episode.h` (hours, -1 = until "Вже легше"), else `ns.defaults[k]`, else NS_EP h;
+  episodes can carry a `note` (what triggered it).
+- Food kinds: `days.data.foodK` {ts: snack|bite|meal}; snack/bite shift the next reminder sooner (FOOD_K, also in notify tick).
+- `watches` (one-time "сповісти, коли зайде / оновить стан") fire via notify type "seen"; `profiles.last_seen_at`.
 - Own "що мені треба": `days.data.need = "own"` + `needText`; saved list in `private_items` id `needs_own`.
 
 ## Applying changes

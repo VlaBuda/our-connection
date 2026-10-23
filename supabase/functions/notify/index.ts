@@ -2,6 +2,7 @@
 //  - {type:"nudge", kind}          from the app: partner presses "нагадати попити" etc.
 //  - {type:"thanks", id}           from the app: I answered my partner's nudge ("Пʼю воду")
 //  - {type:"show", caption}        from the app: I shared a photo in "Хочу тобі показати"
+//  - {type:"seen", kind}           from the app: I opened it / updated my state (fires one-time "watches")
 //  - {type:"ns", what, k}         from the app: "Нервова система" long state or episode
 //  - {type:"status"}               from the app: I changed "Що я зараз роблю" (push only for military statuses)
 //  - {type:"plan", id, event}      from the app: "Наш час" — new plan, "я за", new time
@@ -143,9 +144,17 @@ async function tick() {
       await pushTo(uid, { title: "Вода", body: "Давно не було води. Ковток зараз?", tag: "water" });
       sent++;
     }
-    const f = lastTs(d.food);
+    // A snack holds you for less time than a meal: shift its time back (same numbers as FOOD_K in app.js).
+    const SHIFT: Record<string, number> = { snack: 3, bite: 1.5, meal: 0 };
+    const foodK = (d.foodK ?? {}) as Record<string, string>;
+    const foods = Array.isArray(d.food) ? (d.food as number[]) : [];
+    const f = foods.length ? Math.max(...foods.map((ts) => ts - (SHIFT[foodK[ts]] ?? 0) * 3600_000)) : 0;
+    const lastKind = foods.length ? foodK[Math.max(...foods)] ?? "meal" : "";
     if ((f ? now - f > 4.5 * 3600_000 : hour >= 12) && (await allow(uid, "food", 240))) {
-      await pushTo(uid, { title: "Їжа", body: "Давно не було їжі. Хоч щось маленьке.", tag: "food" });
+      const body = lastKind === "snack" || lastKind === "bite"
+        ? "Останнім був " + (lastKind === "snack" ? "снек" : "перекус") + ". Може, щось ситніше?"
+        : "Давно не було їжі. Хоч щось маленьке.";
+      await pushTo(uid, { title: "Їжа", body, tag: "food" });
       sent++;
     }
   }
@@ -245,6 +254,21 @@ Deno.serve(async (req) => {
       tag: "show",
     });
     return json({ ok: true });
+  }
+
+  if (body.type === "seen") {
+    // The partner asked to know when I open the app or update my state. One push, then the request is gone.
+    const kinds = body.kind === "update" ? ["open", "update"] : ["open"];
+    const { data: ws } = await admin.from("watches").select("*").eq("target", user.id).in("kind", kinds);
+    for (const w of ws ?? []) {
+      await pushTo(w.watcher, {
+        title: name,
+        body: w.kind === "update" ? "Оновлено стан 👀 Можна зазирнути" : "Зараз у застосунку 👋",
+        tag: "seen",
+      });
+      await admin.from("watches").delete().eq("id", w.id);
+    }
+    return json({ ok: true, sent: ws?.length ?? 0 });
   }
 
   if (body.type === "ns") {

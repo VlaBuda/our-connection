@@ -6,6 +6,12 @@ const sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey, {
 
 /* ---------- vocab ---------- */
 const ESS=[{k:"water",t:"Вода",did:"+ Відмітити",gap:2.5},{k:"food",t:"Їжа",did:"+ Відмітити",gap:4.5}];
+// What kind of eating it was. shift = how much sooner the next reminder comes than after a full meal (hours).
+// Stored as days.data.foodK {ts: kind}; no entry = full meal (older records).
+const FOOD_K={snack:{t:"Снек",i:"🍎",shift:3},bite:{t:"Перекус",i:"🥪",shift:1.5},meal:{t:"Їжа",i:"🍲",shift:0}};
+const foodKind=(d,ts)=>((d&&d.foodK)||{})[ts]||"meal";
+function essLast(e,d){const a=(d&&d[e.k])||[];if(!a.length)return 0;
+  return e.k==="food"?Math.max(...a.map(ts=>ts-FOOD_K[foodKind(d,ts)].shift*3600e3)):Math.max(...a)}
 // Self-care by energy level. Levels add up: each level shows everything from the lower ones.
 // "max" retires an item when a better version takes over (snack -> sandwich -> warm meal).
 const CARE=[
@@ -226,11 +232,19 @@ const NS_EP=[
   {k:"freeze",t:"Параліч дій",h:3,now:"Не виходить почати навіть просте. Допомагає назвати один крихітний крок або побути на звʼязку, поки робиться.",
     after:"Сил після ступору мало, не завалюй справами."},
 ];
-const nsOf=id=>{const n=(profiles.get(id)||{}).ns;return {long:arr(n&&n.long),episodes:arr(n&&n.episodes)}};
+const nsOf=id=>{const n=(profiles.get(id)||{}).ns;return {long:arr(n&&n.long),episodes:arr(n&&n.episodes),defaults:(n&&n.defaults)||{}}};
+// Recovery length: set on the episode itself, else the person's usual for this kind, else the built-in.
+// -1 = "поки не скажу" (until "Вже легше", at most 14 days).
+const RECOVERY=[[3,"3 години"],[6,"6 годин"],[12,"12 годин"],[24,"1 день"],[48,"2 дні"],[72,"3 дні"],[168,"тиждень"],[-1,"поки не стане легше"]];
+const recLabel=h=>(RECOVERY.find(r=>r[0]===h)||[0,h+" год"])[1];
+function epHours(e,id){const info=find(NS_EP,e.k)||{h:24};const d=nsOf(id).defaults[e.k];return e.h!=null?e.h:d!=null?d:info.h}
+function epUntil(e,id){const h=epHours(e,id);return h<0?null:new Date(e.ts+h*3600e3)}
+function untilText(e,id){const u=epUntil(e,id);if(!u)return "поки не стане легше";const td=new Date(),tm=new Date();tm.setDate(tm.getDate()+1);
+  return "до ~"+(u.toDateString()===td.toDateString()?hm(u):u.toDateString()===tm.toDateString()?"завтра "+hm(u):dshort(u)+" "+hm(u))}
 const epInfo=k=>find(NS_EP,k);
 // Episodes still "in effect": happening (< 1 h) or recovering (< its h hours), not marked as better.
 function activeEpisodes(id){
-  return nsOf(id).episodes.filter(e=>!e.end&&epInfo(e.k)&&Date.now()-e.ts<epInfo(e.k).h*3600e3).sort((a,b)=>b.ts-a.ts);
+  return nsOf(id).episodes.filter(e=>{if(e.end||!epInfo(e.k))return false;const u=epUntil(e,id);return u?Date.now()<u:Date.now()-e.ts<14*864e5}).sort((a,b)=>b.ts-a.ts);
 }
 const epPhase=e=>Date.now()-e.ts<3600e3?"now":"after";
 const longLabel=l=>l.k==="own"?l.text:(find(NS_LONG,l.k)||{}).t;
@@ -267,7 +281,7 @@ let people=new Map();     // user_id -> today's data
 let days=new Map();       // user_id -> Map(day -> data), last 31 days
 let priv=new Map();       // id -> private data (tasks, care)
 let box=[],inbox=[],thanks=[],sentLast={},editTime=null;
-let plans=[],planEdit=null,seenBase={};
+let plans=[],planEdit=null,seenBase={},watches=[];
 let shows=[],showLimit=6,urlCache=new Map(),pendingFile=null,pendingUrl=null;
 
 const myProfile=()=>profiles.get(uid)||{};
@@ -352,7 +366,7 @@ async function saveMe(patch){
   people.set(uid,me);dayMap(uid).set(today(),me);render();
   const {error}=await sb.from("days").upsert({user_id:uid,day:today(),data:me,updated_at:new Date().toISOString()});
   if(error)return syncErr(error);
-  saved();
+  saved();pingUpdate();
   if(Object.keys(patch).some(k=>NOTABLE.includes(k)))notifyState();
 }
 function dayMap(id){if(!days.has(id))days.set(id,new Map());return days.get(id)}
@@ -401,8 +415,24 @@ async function signShows(){
   const {data}=await sb.storage.from("shows").createSignedUrls(need,6*3600);
   (data||[]).forEach(r=>{if(r.signedUrl)urlCache.set(r.path,{url:r.signedUrl,exp:Date.now()+6*3600e3})});
 }
+async function loadWatches(){const {data,error}=await sb.from("watches").select("*");watches=error?[]:(data||[])}
+// "Скажи, коли зайде / оновить": I tell the server I'm here; it alerts whoever was waiting, once.
+const watchedFor=k=>watches.some(w=>w.target===uid&&(w.kind===k||(k==="update"&&w.kind==="open")));
+async function pingSeen(){
+  const last=ls("seenPing")||0;
+  if(Date.now()-last>5*60000){ls("seenPing",Date.now());sb.from("profiles").update({last_seen_at:new Date().toISOString()}).eq("id",uid).then(()=>{})}
+  if(watchedFor("open")){watches=watches.filter(w=>!(w.target===uid&&w.kind==="open"));sb.functions.invoke("notify",{body:{type:"seen",kind:"open"}}).catch(()=>{})}
+}
+const pingUpdate=debounce(()=>{if(!watchedFor("update"))return;watches=watches.filter(w=>w.target!==uid);sb.functions.invoke("notify",{body:{type:"seen",kind:"update"}}).catch(()=>{})},5000);
+async function toggleWatch(target,kind){
+  const w=watches.find(x=>x.watcher===uid&&x.target===target&&x.kind===kind);
+  if(w){watches=watches.filter(x=>x!==w);render();await sb.from("watches").delete().eq("id",w.id);return}
+  const row={couple_id:myProfile().couple_id,watcher:uid,target,kind};
+  watches.push(row);render();
+  const {error}=await sb.from("watches").insert(row);if(error){syncErr(error);await loadWatches();render()}else saved();
+}
 async function loadPlans(){const {data,error}=await sb.from("plans").select("*").order("created_at",{ascending:false}).limit(200);plans=error?[]:(data||[])}
-async function loadAll(){await Promise.all([loadProfiles(),loadDays(),loadPriv(),loadBox(),loadInbox(),loadShows(),loadPlans()]);render()}
+async function loadAll(){await Promise.all([loadProfiles(),loadDays(),loadPriv(),loadBox(),loadInbox(),loadShows(),loadPlans(),loadWatches()]);render()}
 
 function subscribe(){
   if(channel)sb.removeChannel(channel);
@@ -414,6 +444,7 @@ function subscribe(){
     .on("postgres_changes",{event:"*",schema:"public",table:"profiles"},re(loadProfiles))
     .on("postgres_changes",{event:"*",schema:"public",table:"shows"},re(loadShows))
     .on("postgres_changes",{event:"*",schema:"public",table:"plans"},re(loadPlans))
+    .on("postgres_changes",{event:"*",schema:"public",table:"watches"},re(loadWatches))
     .subscribe(s=>{if(s==="SUBSCRIBED")$("sync").textContent="Синхронізується між вами";else if(s!=="CLOSED")$("sync").textContent="Підключаюсь…"});
 }
 
@@ -442,20 +473,36 @@ function checkEl(id,text,checked,onChange,tag,onDel){
   if(onDel)li.append(btn("del","×",onDel,"Прибрати"));
   return li;
 }
-function essDue(e,d){const a=(d&&d[e.k])||[];const h=new Date().getHours();if(h<8||h>=23)return false;if(!a.length)return true;return (Date.now()-Math.max(...a))/36e5>=e.gap}
-function essNote(e,d){const a=(d&&d[e.k])||[];return a.length?("сьогодні "+a.length+" · востаннє о "+hm(Math.max(...a))):"сьогодні ще не було"}
+function essDue(e,d){const a=(d&&d[e.k])||[];const h=new Date().getHours();if(h<8||h>=23)return false;if(!a.length)return true;return (Date.now()-essLast(e,d))/36e5>=e.gap}
+function essNote(e,d){const a=(d&&d[e.k])||[];if(!a.length)return "сьогодні ще не було";const last=Math.max(...a);
+  if(e.k!=="food")return "сьогодні "+a.length+" · востаннє о "+hm(last);
+  const cnt={};a.forEach(ts=>{const k=foodKind(d,ts);cnt[k]=(cnt[k]||0)+1});
+  return "сьогодні "+Object.keys(FOOD_K).filter(k=>cnt[k]).map(k=>FOOD_K[k].t.toLowerCase()+" "+cnt[k]).join(", ")+" · востаннє о "+hm(last)+", "+FOOD_K[foodKind(d,last)].t.toLowerCase()}
 let lastAdd={};
-function addEss(k){lastAdd[k]=Date.now();saveMe({[k]:[...(myToday()[k]||[]),Date.now()].sort((x,y)=>x-y)});setTimeout(render,1600);answerPending(k,3*3600e3)}
-function setEssTime(k,i,val){
-  const a=[...(myToday()[k]||[])];if(!val)return;
-  const [H,M]=val.split(":").map(Number);const d=new Date();d.setHours(H,M,0,0);
-  a[i]=d.getTime();a.sort((x,y)=>x-y);editTime=null;saveMe({[k]:a});
+function addEss(k,kind){
+  const ts=Date.now(),cur=myToday();lastAdd[k+(kind||"")]=ts;
+  const patch={[k]:[...(cur[k]||[]),ts].sort((x,y)=>x-y)};
+  if(k==="food")patch.foodK=Object.assign({},cur.foodK||{},{[ts]:kind||"meal"});
+  saveMe(patch);setTimeout(render,1600);answerPending(k,3*3600e3);
 }
-function delEss(k,i){const a=[...(myToday()[k]||[])];a.splice(i,1);editTime=null;saveMe({[k]:a})}
+function setEssTime(k,i,val){
+  const cur=myToday(),a=[...(cur[k]||[])];if(!val)return;
+  const [H,M]=val.split(":").map(Number);const d=new Date();d.setHours(H,M,0,0);
+  const old=a[i],patch={};a[i]=d.getTime();a.sort((x,y)=>x-y);patch[k]=a;
+  if(k==="food"){const fk=Object.assign({},cur.foodK||{});const kind=fk[old];delete fk[old];if(kind)fk[d.getTime()]=kind;patch.foodK=fk}
+  editTime=null;saveMe(patch);
+}
+function setFoodKind(ts,kind){const cur=myToday();saveMe({foodK:Object.assign({},cur.foodK||{},{[ts]:kind})})}
+function delEss(k,i){const cur=myToday(),a=[...(cur[k]||[])];const [old]=a.splice(i,1);const patch={[k]:a};
+  if(k==="food"&&cur.foodK){const fk=Object.assign({},cur.foodK);delete fk[old];patch.foodK=fk}
+  editTime=null;saveMe(patch)}
 function essEl(e,d,full){
   const li=el("li","item ess");const tx=el("div","txt");const inner=el("div",null,e.k==="water"?"Попити води":"Поїсти");inner.append(el("small",null,essNote(e,d)));tx.append(inner);
-  const just=Date.now()-(lastAdd[e.k]||0)<1500;const b=btn("plus"+(just?" flash":""),just?"✓ Записано":e.did,()=>addEss(e.k));
-  const top=el("div","esstop");top.append(tx,b);li.append(top);
+  const top=el("div","esstop");top.append(tx);
+  const addBtn=(kind,label)=>{const just=Date.now()-(lastAdd[e.k+(kind||"")]||0)<1500;return btn("plus"+(just?" flash":"")+(kind?" sm":""),just?"✓ Записано":label,()=>addEss(e.k,kind))};
+  if(e.k==="food"){const g=el("div","foodbtns");Object.entries(FOOD_K).forEach(([k,f])=>g.append(addBtn(k,f.i+" "+f.t)));top.append(g)}
+  else top.append(addBtn(null,e.did));
+  li.append(top);
   const a=(d[e.k]||[]);
   if(full&&a.length){
     const times=el("div","times");
@@ -465,10 +512,15 @@ function essEl(e,d,full){
         const inp=el("input","timein");inp.type="time";inp.value=hm(ts);inp.setAttribute("aria-label","Новий час");
         inp.addEventListener("change",()=>setEssTime(e.k,i,inp.value));
         inp.addEventListener("keydown",ev=>{if(ev.key==="Escape"){editTime=null;render()}});
-        const wrap=el("span","timechip editing");wrap.append(inp,btn("del","×",()=>delEss(e.k,i),"Видалити цю відмітку"));times.append(wrap);
+        const wrap=el("span","timechip editing");wrap.append(inp);
+        if(e.k==="food"){const sel=el("select","kindsel");sel.setAttribute("aria-label","Що це було");
+          Object.entries(FOOD_K).forEach(([k,f])=>{const o=el("option",null,f.i+" "+f.t);o.value=k;if(foodKind(d,ts)===k)o.selected=true;sel.append(o)});
+          sel.addEventListener("change",()=>{editTime=null;setFoodKind(ts,sel.value)});wrap.append(sel)}
+        wrap.append(btn("del","×",()=>delEss(e.k,i),"Видалити цю відмітку"));times.append(wrap);
         setTimeout(()=>inp.focus(),0);
       }else{
-        times.append(btn("timechip",hm(ts),()=>{editTime=key;render()},"Змінити час "+hm(ts)));
+        const lbl=(e.k==="food"?FOOD_K[foodKind(d,ts)].i+" ":"")+hm(ts);
+        times.append(btn("timechip",lbl,()=>{editTime=key;render()},"Змінити "+hm(ts)));
       }
     });
     li.append(times);
@@ -535,7 +587,8 @@ function stateRows(d){
     if(em.some(e=>["depressed","empty","hopeless","despair","burnout"].includes(e.k)))t.push("Якщо так уже кілька днів, мʼяко запропонуй поговорити з фахівцем. Без тиску.");
     rows.push({f:"emo",label:"Відчуття: "+fieldText("emo",d),alert:qs.some(q=>q==="red"||q==="blue")||!!d.unsure,tips:t,emo:em});
   }
-  ESS.forEach(e=>{const a=d[e.k]||[];rows.push({label:e.t+": "+(a.length?a.length+", востаннє о "+hm(Math.max(...a)):"ще не було"),alert:essDue(e,d),tips:[],ess:e.k})});
+  ESS.forEach(e=>{const a=d[e.k]||[];const last=a.length?Math.max(...a):0;
+    rows.push({label:e.t+": "+(a.length?a.length+", востаннє о "+hm(last)+(e.k==="food"&&foodKind(d,last)!=="meal"?" ("+FOOD_K[foodKind(d,last)].t.toLowerCase()+")":""):"ще не було"),alert:essDue(e,d),tips:[],ess:e.k})});
   return rows;
 }
 function nsBlock(id,isMe){
@@ -546,8 +599,8 @@ function nsBlock(id,isMe){
     r.append(el("span","fact alert",longLabel(l)+(l.since?" · з "+dshort(l.since):"")));
     if(!isMe&&info)r.append(el("p","tip",info.tip));box.append(r)});
   eps.forEach(e=>{const info=epInfo(e.k),ph=epPhase(e);const r=el("div","nsrow");
-    const until=new Date(e.ts+info.h*3600e3);
-    r.append(el("span","fact alert ep","⚡ "+info.t+" о "+hm(e.ts)+(ph==="after"?" · відновлення до ~"+(until.toDateString()===new Date().toDateString()?hm(until):"завтра "+hm(until)):"")));
+    r.append(el("span","fact alert ep","⚡ "+info.t+" о "+(new Date(e.ts).toDateString()===new Date().toDateString()?"":dshort(e.ts)+" ")+hm(e.ts)+(ph==="after"?" · відновлення "+untilText(e,id):"")));
+    if(e.note)r.append(el("p","why","«"+e.note+"»"));
     if(!isMe)r.append(el("p","tip",ph==="now"?info.now:info.after));box.append(r)});
   out.push(box);return out;
 }
@@ -562,12 +615,14 @@ function personCard(id,d,isMe){
   const sm=el("small",null,d&&d.updated?(isToday?"оновлено о "+hm(d.updated):"востаннє "+dshort(d.updated)):"");
   if(fresh.size)sm.prepend(el("span","newbadge","є нове"));
   who.append(sm);c.append(who);
+  const ls_=(profiles.get(id)||{}).last_seen_at;
+  if(!isMe&&ls_)c.append(el("small","lastseen","в застосунку: "+(new Date(ls_).toDateString()===new Date().toDateString()?"сьогодні о "+hm(ls_):dshort(ls_)+" о "+hm(ls_))));
   const st=statusInfo(profiles.get(id));
   if(st){const p=profiles.get(id);const sl=el("div","status");sl.append(el("span",null,st.i+" "+st.t));
     if(p.status_at)sl.append(el("small",null," з "+(new Date(p.status_at).toDateString()===new Date().toDateString()?hm(p.status_at):dshort(p.status_at)+" "+hm(p.status_at))));
     c.append(sl);if(!isMe&&st.tip)c.append(el("p","tip",st.tip))}
   c.append(...nsBlock(id,isMe));
-  if(!d||!isToday){c.append(el("p","empty",isMe?"Відміть свій стан у вкладці «Стан», і він зʼявиться тут для вас обох.":"Сьогодні стан ще не відмічено."));if(!isMe)c.append(nudgeRow(id));return c}
+  if(!d||!isToday){c.append(el("p","empty",isMe?"Відміть свій стан у вкладці «Стан», і він зʼявиться тут для вас обох.":"Сьогодні стан ще не відмічено."));if(!isMe)c.append(nudgeRow(id),watchRow(id));return c}
   const n=d.need==="own"&&d.needText?{t:d.needText,o:d.needText}:find(NEED,d.need);
   if(n){const nb=el("div","need"+(fresh.has("need")?" fresh":""),isMe?n.t:n.o);c.append(nb);if(!isMe&&n.tip)c.append(el("p","tip",n.tip))}
   const ws=whysOf(d);
@@ -588,8 +643,16 @@ function personCard(id,d,isMe){
     const ul=el("ul");[...log].reverse().forEach(e=>{const li=el("li",e.ts>seen?"fresh":null);li.append(el("time",null,hm(e.ts)),el("span",null,logLine(e)));ul.append(li)});
     det.append(ul);c.append(det);
   }
-  if(!isMe)c.append(nudgeRow(id,d));
+  if(!isMe)c.append(nudgeRow(id,d),watchRow(id));
   return c;
+}
+function watchRow(id){
+  const r=el("div","watchrow");r.append(el("span","hint","Сповістити мене:"));
+  [["open","коли зайде"],["update","коли оновить стан"]].forEach(([k,t])=>{
+    const on=watches.some(w=>w.watcher===uid&&w.target===id&&w.kind===k);
+    const b=btn("nbtn"+(on?" sent":""),(on?"🔔 Чекаю, ":"🔕 ")+t,()=>toggleWatch(id,k));b.setAttribute("aria-pressed",String(on));
+    if(on)b.title="Прийде одне сповіщення. Натисни ще раз, щоб скасувати.";r.append(b)});
+  return r;
 }
 function nudgeRow(id,d){
   const r=el("div","nudges");
@@ -794,13 +857,13 @@ async function setStatus(status,text){
   const patch={status:status||null,status_text:status==="own"?text:null,status_at:status?new Date().toISOString():null};
   Object.assign(myProfile(),patch);render();
   const {error}=await sb.from("profiles").update(patch).eq("id",uid);
-  if(error)return syncErr(error);saved();
+  if(error)return syncErr(error);saved();pingUpdate();
   if(status)sb.functions.invoke("notify",{body:{type:"status"}}).catch(()=>{});
 }
 async function setNs(next){
   const p=myProfile();p.ns=next;render();
   const {error}=await sb.from("profiles").update({ns:next}).eq("id",uid);
-  if(error)return syncErr(error);saved();
+  if(error)return syncErr(error);saved();pingUpdate();
 }
 function toggleLong(k,text){
   const ns=nsOf(uid),on=ns.long.some(l=>l.k===k&&(k!=="own"||l.text===text));
@@ -825,9 +888,21 @@ function nsRow(){
   NS_EP.forEach(o=>eb.append(btn("chip","⚡ "+o.t,()=>addEpisode(o.k))));
   const al=$("nsActive");al.replaceChildren();
   activeEpisodes(uid).forEach(e=>{const info=epInfo(e.k);const li=el("li","item");const tx=el("div","txt");const inner=el("div",null,info.t);
-    const until=new Date(e.ts+info.h*3600e3);
-    inner.append(el("small",null,(epPhase(e)==="now"?"зараз":"відновлення")+" · до ~"+(until.toDateString()===new Date().toDateString()?hm(until):"завтра "+hm(until))));
+    inner.append(el("small",null,(epPhase(e)==="now"?"зараз":"відновлення")+" · "+untilText(e,uid)));
     tx.append(inner);li.append(tx);
+    // How long recovery takes depends on the day: pick it per episode, optionally keep as usual.
+    const set=el("div","epset");
+    const sel=el("select");sel.setAttribute("aria-label","Скільки триває відновлення");
+    const cur=epHours(e,uid);
+    RECOVERY.forEach(([h,t])=>{const o=el("option",null,"Відновлення: "+t);o.value=String(h);if(h===cur)o.selected=true;sel.append(o)});
+    if(!RECOVERY.some(r=>r[0]===cur)){const o=el("option",null,"Відновлення: "+cur+" год");o.value=String(cur);o.selected=true;sel.prepend(o)}
+    sel.addEventListener("change",()=>patchEpisode(e.id,{h:+sel.value}));
+    set.append(sel);
+    const usual=nsOf(uid).defaults[e.k];
+    if(cur!==(usual!=null?usual:info.h))set.append(btn("link","Зробити звичним для «"+info.t.toLowerCase()+"»",()=>{const ns=nsOf(uid);setNs({...ns,defaults:{...ns.defaults,[e.k]:cur}});$("sync").textContent="Наступного разу відновлення після «"+info.t.toLowerCase()+"» буде "+recLabel(cur)}));
+    const note=el("input");note.type="text";note.maxLength=200;note.value=e.note||"";note.placeholder="Що вплинуло, скільки тривало (бачите обоє)";note.setAttribute("aria-label","Що вплинуло");
+    note.addEventListener("change",()=>patchEpisode(e.id,{note:note.value.trim()||undefined}));
+    set.append(note);li.append(set);
     if(epEdit===e.id){const inp=el("input","timein");inp.type="time";inp.value=hm(e.ts);inp.setAttribute("aria-label","Коли почалось");
       inp.addEventListener("change",()=>{if(!inp.value)return;const [H,M]=inp.value.split(":").map(Number);const dt=new Date(e.ts);dt.setHours(H,M,0,0);if(dt>Date.now())dt.setDate(dt.getDate()-1);epEdit=null;patchEpisode(e.id,{ts:dt.getTime()})});
       li.append(inp);setTimeout(()=>inp.focus(),0)}
@@ -988,6 +1063,7 @@ function renderStats(){
     ["Болить голова",cnt(h=>h.head==="pain")],
     ["Вода на день",avg("water")],
     ["Їжа на день",avg("food")],
+    ["З них нормальної їжі",(()=>{const v=list.map(x=>(x.h.food||[]).filter(ts=>foodKind(x.h,ts)==="meal").length).filter((n,i)=>(list[i].h.food||[]).length);return v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):"—"})()],
   ];
   const s=$("statSummary");s.replaceChildren();
   tiles.forEach(([l,v])=>{const t=el("div","tile");t.append(el("span","tv",String(v)),el("span","tl",l));s.append(t)});
@@ -1103,7 +1179,7 @@ async function start(session){
   if(!myProfile().couple_id&&!ls("skipPair")){show("pair");return}
   openApp();
 }
-async function openApp(){show("app");setTab(location.hash.slice(1)||ls("tab")||"us");$("sync").textContent="Підключаюсь…";await loadAll();subscribe();renderPushState()}
+async function openApp(){show("app");setTab(location.hash.slice(1)||ls("tab")||"us");$("sync").textContent="Підключаюсь…";await loadAll();subscribe();renderPushState();pingSeen()}
 
 /* ---------- settings ---------- */
 function renderSettings(){
@@ -1229,7 +1305,7 @@ setInterval(render,5*60*1000);
 document.addEventListener("visibilitychange",()=>{
   const pid=partnerId();
   if(document.hidden){if(tab==="us"&&pid)ls("seenLog",Object.assign({},ls("seenLog")||{},{[pid]:Date.now()}));return}
-  if(uid&&!$("app").hidden){if(tab==="us")markSeen();loadAll()}
+  if(uid&&!$("app").hidden){if(tab==="us")markSeen();loadAll().then(pingSeen)}
 });
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 setAuthMode(false);
