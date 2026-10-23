@@ -38,6 +38,9 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
   episodes can carry a `note` (what triggered it).
 - Food kinds: `days.data.foodK` {ts: snack|bite|meal}; snack/bite shift the next reminder sooner (FOOD_K, also in notify tick).
 - `watches` (one-time "сповісти, коли зайде / оновить стан") fire via notify type "seen"; `profiles.last_seen_at`.
+- Episode retrospective (`RETRO` in app.js): triggers / first signs / what helped / power / next time. Shared retro on
+  `episode.retro` (partner sees it, card shows "Зазвичай допомагає"); private one in `private_items` "retro_<id>";
+  own chip words in "retro_own". `autoFactors()` suggests triggers from the day's marks. Patterns in Статистика.
 - Own "що мені треба": `days.data.need = "own"` + `needText`; saved list in `private_items` id `needs_own`.
 
 ## Applying changes
@@ -58,3 +61,4 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
 ## Ideas not done yet
 - Fun personality quizzes ("яка я дівчина?" style) — user will pick the format later.
 - Description of her typical week / recurring tasks (she plans to write a spec).
+- Her other cycles (she wants to track them too, to catch triggers) — reuse the retro/patterns approach.

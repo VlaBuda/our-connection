@@ -373,3 +373,21 @@ dialog.setdlg{max-width:min(720px,calc(100vw - 24px));width:100%;min-height:min(
 .lastseen{color:var(--muted);font-size:.8rem;margin-top:-6px}
 .watchrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .watchrow .nbtn{font-weight:500;font-size:.8rem}
+
+/* ---------- ретроспектива ---------- */
+.retrobody{display:flex;flex-direction:column;gap:18px}
+.retrosec{display:flex;flex-direction:column;gap:8px}
+.retrosec h3{font-size:1.05rem}
+.chip.suggested{border-style:dashed;border-color:var(--accent)}
+.retroauto{margin:0;font-size:.88rem;background:var(--accent-soft);border-radius:10px;padding:8px 10px}
+.retrodlg textarea{font:inherit;padding:10px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);resize:vertical}
+.retropriv{display:flex;gap:10px;align-items:flex-start;font-size:.92rem;cursor:pointer}
+.retropriv input{width:20px;height:20px;accent-color:var(--accent);flex:none;margin-top:2px}
+.retrofoot{position:sticky;bottom:-20px;background:#1a1c15;padding:12px 0 4px;justify-content:flex-end;align-items:center}
+.retrocard{background:var(--accent-soft);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.retrocard p{margin:0}
+.retrocard .row{justify-content:flex-start;align-items:center}
+.patterns{background:var(--surface);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.patterns h2{font-size:1.15rem}
+.pattern{display:flex;flex-direction:column;gap:6px}
+.pattern .why{margin:0}

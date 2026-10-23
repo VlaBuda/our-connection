@@ -133,6 +133,8 @@
         <p class="sub small">Епізод: щойно було або є зараз</p>
         <div class="chips" id="nsEp"></div>
         <ul class="list" id="nsActive"></ul>
+        <div id="retroDue"></div>
+        <details class="history"><summary>Епізоди і розбори <span id="epHistCount"></span></summary><ul class="list" id="epHist"></ul></details>
       </div>
       <p class="sub">Через що <span class="opt">можна кілька, кожну окремо</span></p>
       <form id="whyForm" class="inline"><input type="text" id="why" placeholder="Наприклад: не виспалась, багато роботи" autocomplete="off" aria-label="Причина"><button class="btn" type="submit">Додати</button></form>
@@ -211,6 +213,7 @@
       <div class="chips" id="statRange"></div>
     </div>
     <div class="summary" id="statSummary"></div>
+    <section class="patterns" id="patterns"></section>
     <div class="tablebox"><table id="week"></table></div>
   </div>
 </div>
@@ -247,6 +250,14 @@
       <div class="field"><label>Пара</label><p class="hint" id="pairInfo"></p></div>
       <div class="row"><button class="ghost" id="logout" type="button">Вийти з акаунта</button></div>
     </div>
+  </div>
+</dialog>
+
+<dialog id="retroDlg" class="setdlg retrodlg">
+  <div class="settings">
+    <div class="row sethead"><h2>Розбір епізоду</h2></div>
+    <div id="retroBody" class="retrobody"></div>
+    <div class="row retrofoot"><button class="ghost" id="retroCancel" type="button">Закрити</button><button class="btn" id="retroSave" type="button">Зберегти</button></div>
   </div>
 </dialog>
 

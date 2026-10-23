@@ -601,7 +601,10 @@ function nsBlock(id,isMe){
   eps.forEach(e=>{const info=epInfo(e.k),ph=epPhase(e);const r=el("div","nsrow");
     r.append(el("span","fact alert ep","⚡ "+info.t+" о "+(new Date(e.ts).toDateString()===new Date().toDateString()?"":dshort(e.ts)+" ")+hm(e.ts)+(ph==="after"?" · відновлення "+untilText(e,id):"")));
     if(e.note)r.append(el("p","why","«"+e.note+"»"));
-    if(!isMe)r.append(el("p","tip",ph==="now"?info.now:info.after));box.append(r)});
+    if(!isMe)r.append(el("p","tip",ph==="now"?info.now:info.after));
+    if(!isMe){const help=topOf(retrosOf(id,180).filter(x=>x.e.k===e.k),"help",4);
+      if(help.length)r.append(el("p","tip","Зазвичай допомагає: "+help.map(x=>x.t.toLowerCase()).join(", ")+"."))}
+    box.append(r)});
   out.push(box);return out;
 }
 function personCard(id,d,isMe){
@@ -843,7 +846,7 @@ function closeShowForm(){if(pendingUrl)URL.revokeObjectURL(pendingUrl);$("showFo
 function renderState(d){
   const lvl=d.energy||0;
   document.querySelectorAll(".lvl").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.l===lvl)));
-  statusRow();emoMap(d);nsRow();
+  statusRow();emoMap(d);nsRow();retroRow();
   needRow(d);multiRow($("sleepChips"),SLEEP,"sleep",["good"]);chipRow($("headChips"),HEAD,"head");multiRow($("moodChips"),MOOD,"mood");
   const showPain=d.head==="pain"||d.head==="migraine",showSigns=d.head==="prodrome"||d.head==="migraine";
   $("painBox").hidden=!showPain;if(showPain)scaleRow($("painChips"),"pain");
@@ -1065,6 +1068,7 @@ function renderStats(){
     ["Їжа на день",avg("food")],
     ["З них нормальної їжі",(()=>{const v=list.map(x=>(x.h.food||[]).filter(ts=>foodKind(x.h,ts)==="meal").length).filter((n,i)=>(list[i].h.food||[]).length);return v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):"—"})()],
   ];
+  renderPatterns();
   const s=$("statSummary");s.replaceChildren();
   tiles.forEach(([l,v])=>{const t=el("div","tile");t.append(el("span","tv",String(v)),el("span","tl",l));s.append(t)});
   if(top.length){const t=el("div","tile wide");t.append(el("span","tv small",top.join(", ")),el("span","tl","Найчастіший настрій"));s.append(t)}
@@ -1078,6 +1082,162 @@ function renderStats(){
     const hd=find(HEAD,h.head);c(hd?hd.t+(h.pain?" "+h.pain:""):"—",h.head==="migraine"||h.head==="prodrome"?"mig":"");
     const ml=labels(MOOD,h.mood);c(ml.length?ml.join(", "):"—");
     c(String((h.water||[]).length||"—"));c(String((h.food||[]).length||"—"));});
+}
+
+/* ---------- ретроспектива епізодів ---------- */
+// Gentle look back at an acute episode: what came before, first signals, what helped.
+// Shared retros live on the episode (profiles.ns, partner can read); private ones in private_items "retro_<episode id>".
+const RETRO={
+  tr:{t:"Що було перед цим",hint:"За добу-дві до епізоду. Можна кілька. Це не про провину, а про те, щоб помітити наперед.",groups:[
+    ["Тіло",[["sleep","Мало або поганий сон"],["hunger","Голод, пропущена їжа"],["water","Мало води"],["pain","Біль, мігрень"],["cycle","Цикл, ПМС"],["ill","Хвороба"],["caffeine","Кофеїн, алкоголь"],["meds","Пропущені ліки"]]],
+    ["Відчуття",[["noise","Шум"],["light","Яскраве світло"],["crowd","Натовп, багато людей"],["touch","Дотики, незручний одяг"],["smell","Запахи"]]],
+    ["Люди",[["conflict","Конфлікт, сварка"],["critique","Критика"],["talk","Забагато спілкування"],["masking","Довге маскування"],["rejected","Відмова, ігнор"],["lonely","Самотність"],["worry","Хвилювання за близьких"]]],
+    ["Навантаження",[["deadline","Дедлайн, тиск"],["toomuch","Забагато справ"],["change","Зміна планів"],["unknown","Невизначеність"],["decisions","Багато рішень"],["norest","Без відпочинку"],["road","Дорога, переїзд"]]],
+    ["Світ",[["news","Новини"],["alarms","Обстріли, тривоги"],["nolink","Немає звʼязку з близьким"],["memory","Спогади, нагадування"]]],
+  ]},
+  signs:{t:"Перші сигнали",hint:"Що зʼявилось раніше, ніж накрило. По цьому наступного разу можна впізнати наперед.",groups:[
+    ["",[["irritable","Дратівливість"],["fog","Туман у голові"],["tension","Напруга в тілі"],["hide","Хочеться сховатися"],["mute","Важко говорити"],["loud","Звуки стали гучнішими"],["tears","Ком у горлі, сльози"],["stuck","Не можу почати справи"],["insomnia","Безсоння"],["sweet","Тягне на солодке"],["zoneout","Відключаюсь від розмов"],["noeat","Забуваю їсти й пити"]]],
+  ]},
+  help:{t:"Що допомогло",hint:"Навіть трошки. Партнер бачитиме це як підказку наступного разу.",groups:[
+    ["",[["quiet","Тиша"],["dark","Темрява"],["sleep","Сон"],["food","Вода, їжа"],["alone","Побути наодинці"],["partner","Голос або обійми партнера"],["msg","Повідомлення без питань"],["stim","Стимінг"],["weight","Плед, вага, тиск"],["shower","Душ"],["move","Рух, прогулянка"],["cry","Поплакати"],["familiar","Знайомий серіал чи гра"],["cancel","Скасувати плани"]]],
+  ]},
+};
+const retroLabel=(sec,k)=>{for(const [,items] of RETRO[sec].groups){const f=items.find(x=>x[0]===k);if(f)return f[1]}return k.startsWith("own:")?k.slice(4):k};
+const retroOf=(e,id)=>e.retro||(id===uid?(priv.get("retro_"+e.id)||null):null);
+const ownRetro=()=>priv.get("retro_own")||{kind:"retro_own",tr:[],signs:[],help:[]};
+// All retros of a person I can read (partner: shared only), newest first.
+function retrosOf(id,days){
+  const cut=Date.now()-(days||90)*864e5;
+  return nsOf(id).episodes.filter(e=>e.ts>cut).map(e=>({e,r:retroOf(e,id)})).filter(x=>x.r).sort((a,b)=>b.e.ts-a.e.ts);
+}
+function topOf(list,sec,n){const c={};list.forEach(({r})=>arr(r[sec]).forEach(k=>c[k]=(c[k]||0)+1));
+  return Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,n||6).map(([k,v])=>({k,v,t:retroLabel(sec,k)}))}
+// What the app's own marks show for the day before the episode. Suggestions only, never auto-checked.
+function autoFactors(e,id){
+  const out=new Set(),notes=[],dm=dayMap(id);
+  const d0=new Date(e.ts),d1=new Date(e.ts-864e5);
+  [dkey(d0),dkey(d1)].forEach(k=>{
+    const h=(id===uid&&k===today())?myToday():dm.get(k);if(!h)return;
+    if(["little","bad","woke","nightmares"].some(x=>has(h.sleep,x)))out.add("sleep");
+    if(h.head==="migraine"||h.head==="prodrome"||(h.pain||0)>=5)out.add("pain");
+    if(arr(h.emo).some(x=>x==="overstimulated"))out.add("noise");
+    if(arr(h.emo).some(x=>x==="lonely"||x==="longing"))out.add("lonely");
+    whysOf(h).forEach(w=>{if(!w.ts||w.ts<e.ts)notes.push(w.text)});
+  });
+  const same=id===uid&&dkey(d0)===today()?myToday():dm.get(dkey(d0))||{};
+  const before=a=>arr(a).filter(ts=>ts<e.ts&&ts>e.ts-12*3600e3);
+  if(new Date(e.ts).getHours()>=12){
+    if(before(same.water).length<2)out.add("water");
+    if(!before(same.food).some(ts=>foodKind(same,ts)!=="snack"))out.add("hunger");
+  }
+  return {keys:[...out],notes:notes.slice(-4)};
+}
+let retroDraft=null;
+function openRetro(e){
+  const r=retroOf(e,uid);
+  retroDraft={ep:e.id,tr:[...arr(r&&r.tr)],signs:[...arr(r&&r.signs)],help:[...arr(r&&r.help)],next:(r&&r.next)||"",power:(r&&r.power)||0,
+    private:r?(!e.retro):false};
+  renderRetro();$("retroDlg").showModal();$("retroDlg").scrollTop=0;
+}
+function renderRetro(){
+  const d=retroDraft,e=nsOf(uid).episodes.find(x=>x.id===d.ep);if(!e)return;
+  const info=epInfo(e.k),body=$("retroBody");body.replaceChildren();
+  body.append(el("p","hint",info.t+" · "+dshort(e.ts)+" о "+hm(e.ts)+(e.note?" · «"+e.note+"»":"")));
+  const auto=autoFactors(e,uid);
+  const own=ownRetro();
+  ["tr","signs","help"].forEach(sec=>{
+    const box=el("div","retrosec");box.append(el("h3",null,RETRO[sec].t),el("p","hint",RETRO[sec].hint));
+    if(sec==="tr"&&(auto.keys.length||auto.notes.length)){
+      const a=el("p","retroauto");
+      a.textContent="За відмітками застосунку"+(auto.keys.length?": "+auto.keys.map(k=>retroLabel("tr",k).toLowerCase()).join(", ")+" (обведені пунктиром)":"")+
+        (auto.notes.length?". Ти писав(ла): "+auto.notes.map(n=>"«"+n+"»").join(", "):"")+".";
+      box.append(a);
+    }
+    RETRO[sec].groups.forEach(([g,items])=>{
+      if(g)box.append(el("p","sub small",g));
+      const row=el("div","chips");
+      items.forEach(([k,t])=>row.append(retroChip(sec,k,t,sec==="tr"&&auto.keys.includes(k))));
+      if(!g||g===RETRO[sec].groups[RETRO[sec].groups.length-1][0]){
+        arr(own[sec]).forEach(t=>row.append(retroChip(sec,"own:"+t,t,false)));
+        d[sec].filter(k=>k.startsWith("own:")&&!arr(own[sec]).includes(k.slice(4))).forEach(k=>row.append(retroChip(sec,k,k.slice(4),false)));
+      }
+      box.append(row);
+    });
+    const f=el("form","inline");const inp=el("input");inp.type="text";inp.maxLength=60;inp.placeholder="+ своє";inp.setAttribute("aria-label","Своє: "+RETRO[sec].t);
+    f.append(inp,el("button","btn sm","Додати"));
+    f.addEventListener("submit",ev=>{ev.preventDefault();const t=inp.value.trim();if(!t)return;
+      const k="own:"+t;if(!d[sec].includes(k))d[sec].push(k);
+      const o=ownRetro();if(!arr(o[sec]).includes(t))putPriv("retro_own",Object.assign({},o,{[sec]:[...arr(o[sec]),t].slice(-20)}));
+      renderRetro()});
+    box.append(f);body.append(box);
+  });
+  const pw=el("div","retrosec");pw.append(el("h3",null,"Наскільки сильно було"));
+  const pr=el("div","chips");["ледь","помітно","сильно","дуже","нестерпно"].forEach((t,i)=>{const b=btn("chip",(i+1)+" · "+t,()=>{d.power=d.power===i+1?0:i+1;renderRetro()});b.setAttribute("aria-pressed",String(d.power===i+1));pr.append(b)});
+  pw.append(pr);body.append(pw);
+  const nx=el("div","retrosec");nx.append(el("h3",null,"Що спробувати наступного разу"),el("p","hint","Маленьке і реальне. Наприклад: «коли почне дратувати шум, одразу навушники» або «попросити написати мені без питань»."));
+  const ta=el("textarea");ta.maxLength=500;ta.rows=3;ta.value=d.next;ta.setAttribute("aria-label","Що спробувати наступного разу");ta.addEventListener("input",()=>d.next=ta.value);
+  nx.append(ta);body.append(nx);
+  const pv=el("label","retropriv");const cb=el("input");cb.type="checkbox";cb.checked=!d.private;cb.addEventListener("change",()=>d.private=!cb.checked);
+  pv.append(cb,el("span",null,"Бачить і "+(partnerId()?nm(partnerId()):"партнер")+": так зможе помітити сигнали раніше й знатиме, що допомагає"));
+  body.append(pv);
+}
+function retroChip(sec,k,t,suggested){
+  const on=retroDraft[sec].includes(k);
+  const b=btn("chip"+(suggested?" suggested":""),t,()=>{const a=retroDraft[sec];retroDraft[sec]=on?a.filter(x=>x!==k):[...a,k];renderRetro()});
+  b.setAttribute("aria-pressed",String(on));return b;
+}
+async function saveRetro(){
+  const d=retroDraft,ns=nsOf(uid);
+  const r={tr:d.tr,signs:d.signs,help:d.help,next:d.next.trim()||undefined,power:d.power||undefined,at:Date.now()};
+  if(d.private){
+    await putPriv("retro_"+d.ep,Object.assign({kind:"retro",ep:d.ep},r));
+    setNs({...ns,episodes:ns.episodes.map(e=>e.id===d.ep?Object.assign({},e,{retro:undefined,retroDone:true}):e)});
+  }else{
+    if(priv.has("retro_"+d.ep))delPriv("retro_"+d.ep);
+    setNs({...ns,episodes:ns.episodes.map(e=>e.id===d.ep?Object.assign({},e,{retro:r,retroDone:true}):e)});
+  }
+  $("retroDlg").close();retroDraft=null;$("sync").textContent="Розбір збережено. Дякую, що подбав(ла) про себе й так";
+}
+// Past episodes waiting for a look back: over (recovered or "Вже легше"), within a week, not done or skipped.
+function retroDue(){
+  const act=new Set(activeEpisodes(uid).map(e=>e.id));
+  return nsOf(uid).episodes.filter(e=>!act.has(e.id)&&!e.retroDone&&!e.retroSkip&&Date.now()-e.ts<7*864e5).sort((a,b)=>b.ts-a.ts);
+}
+function retroRow(){
+  const box=$("retroDue");box.replaceChildren();
+  const due=retroDue();
+  if(due.length){const e=due[0],info=epInfo(e.k);
+    const c=el("div","retrocard");
+    c.append(el("p",null,"Коли буде сили: розібрати "+info.t.toLowerCase()+" "+dshort(e.ts)+"? Кілька дотиків, щоб помітити, що до нього привело і що допомогло."));
+    const r=el("div","row");r.append(btn("btn sm","Розібрати",()=>openRetro(e)),btn("ghost sm","Не зараз",()=>{ls("retroLater",Date.now());render()}),
+      btn("link","Не хочу розбирати цей",()=>patchEpisode(e.id,{retroSkip:true})));
+    c.append(r);
+    if(Date.now()-(ls("retroLater")||0)>6*3600e3)box.append(c);
+  }
+  const hist=$("epHist"),list=nsOf(uid).episodes.filter(e=>epInfo(e.k)).sort((a,b)=>b.ts-a.ts).slice(0,30);
+  hist.replaceChildren();$("epHistCount").textContent=list.length?"("+list.length+")":"";
+  list.forEach(e=>{const li=el("li","item");const tx=el("div","txt");const inner=el("div",null,epInfo(e.k).t);
+    const r=retroOf(e,uid);
+    inner.append(el("small",null,dshort(e.ts)+" о "+hm(e.ts)+(r?" · розібрано"+(e.retro?"":" (лише для тебе)"):"")));tx.append(inner);li.append(tx);
+    li.append(btn("ghost sm",r?"Переглянути":"Розібрати",()=>openRetro(e)));hist.append(li)});
+  if(!list.length)hist.append(el("p","empty","Тут збиратимуться епізоди, щоб їх можна було розібрати пізніше."));
+}
+// Patterns for the stats tab.
+function renderPatterns(){
+  const box=$("patterns");box.replaceChildren();
+  const rs=retrosOf(statWho,90),eps=nsOf(statWho).episodes.filter(e=>Date.now()-e.ts<90*864e5&&epInfo(e.k));
+  box.append(el("h2",null,"Патерни епізодів"));
+  if(!eps.length){box.append(el("p","empty","За 90 днів епізодів не відмічено."));return}
+  const byK={};eps.forEach(e=>byK[e.k]=(byK[e.k]||0)+1);
+  box.append(el("p","hint","За 90 днів: "+Object.entries(byK).map(([k,n])=>epInfo(k).t.toLowerCase()+" "+n).join(", ")+". Розібрано: "+rs.length+"."));
+  if(!rs.length){box.append(el("p","empty",statWho===uid?"Після кількох розборів тут зʼявиться, що найчастіше передує епізодам і що допомагає.":"Розборів, якими поділились, поки немає."));return}
+  [["tr","Найчастіше перед епізодом"],["signs","Ранні сигнали"],["help","Що допомагає"]].forEach(([sec,t])=>{
+    const top=topOf(rs,sec,6);if(!top.length)return;
+    const g=el("div","pattern");g.append(el("p","sub",t));
+    const row=el("div","facts");top.forEach(x=>row.append(el("span","fact"+(sec==="tr"?" alert":""),x.t+(x.v>1?" · "+x.v:""))));g.append(row);box.append(g);
+  });
+  const nexts=rs.filter(x=>x.r.next).slice(0,3);
+  if(nexts.length){const g=el("div","pattern");g.append(el("p","sub","Наступного разу спробувати"));nexts.forEach(x=>g.append(el("p","why","«"+x.r.next+"» · "+dshort(x.e.ts))));box.append(g)}
 }
 
 /* ---------- push ---------- */
@@ -1273,6 +1433,8 @@ $("showForm").addEventListener("submit",async e=>{
   finally{b.disabled=false;b.textContent="Показати"}
 });
 $("showMore").addEventListener("click",async()=>{showLimit+=6;await signShows();render()});
+$("retroSave").addEventListener("click",saveRetro);
+$("retroCancel").addEventListener("click",()=>{$("retroDlg").close();retroDraft=null});
 $("photoClose").addEventListener("click",()=>$("photoView").close());
 $("careForm").addEventListener("submit",e=>{e.preventDefault();const text=$("careText").value.trim();if(!text)return;
   const id="cc"+Date.now().toString(36);putPriv(id,{kind:"care_custom",text,min:+$("careMin").value});$("careText").value="";flash(e.submitter,"✓ Додано")});
