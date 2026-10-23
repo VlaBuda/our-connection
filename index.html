@@ -94,6 +94,9 @@
   <!-- Стан -->
   <div class="tabpane" data-pane="state" hidden>
     <section aria-label="Мій стан">
+      <p class="sub">Що я зараз роблю <span class="opt">видно, доки не зміниш</span></p>
+      <div class="chips" id="statusChips"></div>
+      <form id="statusForm" class="inline" hidden><input type="text" id="statusText" maxlength="60" placeholder="Своїми словами" autocomplete="off" aria-label="Свій статус"><button class="btn" type="submit">Додати</button><button class="link" type="button" id="statusCancel">Скасувати</button></form>
       <p class="sub">Сили</p>
       <div class="levels">
         <button class="lvl" data-l="1" aria-pressed="false"><span class="bars"><i></i><i></i><i></i><i></i></span>Майже нуль</button>
@@ -112,6 +115,13 @@
       <div id="signBox" class="reveal" hidden><p class="sub">Що відчуваєш <span class="opt">можна кілька</span></p><div class="chips" id="signChips"></div></div>
       <p class="sub">Настрій <span class="opt">можна кілька</span></p>
       <div class="chips" id="moodChips"></div>
+      <div class="row unsure"><button class="chip warn" type="button" id="unsureBtn" aria-pressed="false">🌀 Не розумію свій стан</button><button class="link" type="button" id="emoToggle">Підібрати точніше слово</button></div>
+      <div id="emoBox" class="emobox" hidden>
+        <p class="hint">Два питання: скільки зараз енергії (верх більше, низ менше) і наскільки приємно (ліворуч неприємно, праворуч приємно). Чим далі від центру, тим сильніше.</p>
+        <div class="emomap"><span class="ax ax-up">↑ більше енергії</span><div class="emogrid" id="emoGrid"></div><span class="ax ax-dn">↓ менше енергії</span>
+          <div class="axh"><span>← неприємно</span><span>приємно →</span></div></div>
+        <p class="emoinfo" id="emoInfo" aria-live="polite"></p>
+      </div>
       <p class="sub">Через що <span class="opt">можна кілька, кожну окремо</span></p>
       <form id="whyForm" class="inline"><input type="text" id="why" placeholder="Наприклад: не виспалась, багато роботи" autocomplete="off" aria-label="Причина"><button class="btn" type="submit">Додати</button></form>
       <ul class="list" id="whyList"></ul>
@@ -198,6 +208,7 @@
     <h2>Налаштування</h2>
     <div class="field"><label for="setName">Як тебе називати</label><input type="text" id="setName" maxlength="30"></div>
     <div class="field"><label>Твій колір</label><div class="colors" id="setColor"></div></div>
+    <div class="field"><label>Мої статуси «Що я зараз роблю»</label><div class="chips" id="setStatusSet"></div></div>
     <div class="field"><label>Тема</label><div class="themes" id="setTheme"></div></div>
     <div class="row"><span id="pushState" class="hint"></span><button class="btn" id="pushOn" type="button">Увімкнути сповіщення</button></div>
     <div class="field"><label>Пара</label><p class="hint" id="pairInfo"></p></div>

@@ -73,17 +73,93 @@ const ELBL={1:"майже нуль",2:"трохи є",3:"норм",4:"розгі
 const WLABEL={1:"легка",2:"середня",3:"важка"};
 const KIND={tell:"розповісти",dream:"мрія",talk:"обговорити"};
 const DONE={tell:"Розказано",dream:"Здійснено",talk:"Обговорено"};
-const NUDGE={water:"Нагадати попити",food:"Нагадати поїсти",rest:"Нагадати відпочити",hug:"Думаю про тебе"};
-const NUDGE_IN={water:"нагадує тобі попити води",food:"нагадує тобі поїсти",rest:"нагадує тобі відпочити",hug:"думає про тебе"};
+const NUDGE={water:"Нагадати попити",food:"Нагадати поїсти",rest:"Нагадати відпочити",embrace:"🫂 Обійняти",hug:"Думаю про тебе"};
+const NUDGE_IN={water:"нагадує тобі попити води",food:"нагадує тобі поїсти",rest:"нагадує тобі відпочити",embrace:"обіймає тебе 🫂",hug:"думає про тебе"};
 // Reply button on a nudge I received, and the thank-you my partner then sees (same words in notify/index.ts).
-const REPLY={water:"💧 Пʼю воду",food:"🍽 Іду їсти",rest:"🌿 Роблю паузу",hug:"🤍 І я про тебе"};
-const REPLY_THANKS={water:"Пʼю воду 💧 Дякую, що нагадуєш!",food:"Іду їсти 🍽 Дякую, що нагадуєш!",rest:"Роблю паузу 🌿 Дякую, що нагадуєш!",hug:"І я про тебе думаю 🤍"};
+const REPLY={water:"💧 Пʼю воду",food:"🍽 Іду їсти",rest:"🌿 Роблю паузу",embrace:"🤍 Дякую",hug:"🤍 І я про тебе"};
+const REPLY_THANKS={water:"Пʼю воду 💧 Дякую, що нагадуєш!",food:"Іду їсти 🍽 Дякую, що нагадуєш!",rest:"Роблю паузу 🌿 Дякую, що нагадуєш!",embrace:"Дякую за обійми 🤍 Стало трохи тепліше",hug:"І я про тебе думаю 🤍"};
 const NUDGE_GAP=2*3600e3; // one nudge of each kind per 2 hours (also enforced in the database)
 const MSG={1:"Сьогодні режим збереження. Вода, їжа, базова турбота, і все. Задачі почекають, це нормально.",2:"Трохи сил є. Одна-дві легкі речі, і перерва.",3:"Сили є. Можна взятися за щось вагоме, але не за все одразу.",4:"Є розгін. Візьмись за важке, поки воно легко йде. І не пропускай їжу та воду: після підйому часто буває спад."};
 const TITLES={us:"Ми сьогодні",state:"Як ти зараз?",care:"Турбота",time:"Наш час",box:"Для нас",stats:"Статистика"};
+// "Що я зараз роблю". Two sets; each person picks theirs in settings. tip = advice on the partner's card.
+const STATUS={
+  civil:[
+    {k:"work",t:"Працюю",i:"💼",tip:"Може відповідати із затримкою."},
+    {k:"home",t:"Домашні справи",i:"🏠"},
+    {k:"out",t:"Справи поза домом",i:"🛒",tip:"Не вдома, відповідь може бути коротка."},
+    {k:"reno",t:"Ремонт",i:"🔨",tip:"Руки зайняті й, мабуть, у пилюці. Голосове краще за дзвінок."},
+    {k:"rest",t:"Відпочиваю",i:"🛋",tip:"Добрий момент написати чи подзвонити."},
+    {k:"road",t:"У дорозі",i:"🚌"},
+    {k:"sleep",t:"Сплю",i:"🌙",tip:"Не буди, прочитає зранку."},
+  ],
+  military:[
+    {k:"position",t:"На позиції",i:"🪖",tip:"Може довго не відповідати. Пиши коротко і без питань, що вимагають відповіді.",push:1},
+    {k:"task",t:"На завданні",i:"🎯",tip:"Може довго не відповідати. Пиши коротко і без питань, що вимагають відповіді.",push:1},
+    {k:"duty",t:"Чергування",i:"🕑",tip:"Відповіді можуть бути уривками.",push:1},
+    {k:"base",t:"Штаб або база",i:"🏢",tip:"Звʼязок є, але часу мало.",push:1},
+    {k:"training",t:"Навчання",i:"📋",push:1},
+    {k:"road",t:"У дорозі",i:"🚙",push:1},
+    {k:"rest",t:"Відпочинок",i:"🛌",tip:"Час, коли можна подзвонити чи просто побути разом.",push:1},
+    {k:"offline",t:"Без звʼязку",i:"📵",tip:"Тиша зараз не означає, що щось сталося. Напиши, прочитає, коли зʼявиться звʼязок.",push:1},
+    {k:"sleep",t:"Сплю",i:"🌙",tip:"Не буди, якщо не терміново."},
+  ],
+};
+const statusInfo=p=>{if(!p||!p.status)return null;if(p.status==="own")return p.status_text?{t:p.status_text,i:"📍"}:null;
+  return [...STATUS.civil,...STATUS.military].find(x=>x.k===p.status&&(STATUS[p.status_set||"civil"]||[]).includes(x))||find([...STATUS.military,...STATUS.civil],p.status)||null};
+// Emotion map, like How We Feel: energy (up/down) × pleasantness (left/right).
+// Each quadrant lists 9 feelings in 3 tiers, from mild (near the centre) to intense (outer edge).
+const EMO_Q={
+  red:{t:"Багато енергії, неприємно",tip:"Зараз багато напруги. Спокійний голос, без суперечок і порад. Можна спитати, чи хоче виговоритись."},
+  yellow:{t:"Багато енергії, приємно",tip:"Добрий момент: порадій разом і спитай, що саме тішить."},
+  blue:{t:"Мало енергії, неприємно",tip:"Сил і радості мало. Не треба підбадьорювати чи виправляти: «я поряд, можеш не відповідати» вже допомагає."},
+  green:{t:"Мало енергії, приємно",tip:"Спокійний момент. Можна просто побути поряд, без планів."},
+};
+const EMO=[
+  // red: mild → intense
+  {k:"uneasy",q:"red",t:"Неспокій",d:"Щось муляє, але не зовсім зрозуміло що."},
+  {k:"irritated",q:"red",t:"Роздратування",d:"Дрібниці чіпляють сильніше, ніж зазвичай."},
+  {k:"tense",q:"red",t:"Напруга",d:"Тіло і голова в режимі «насторожі», важко розслабитись."},
+  {k:"anxious",q:"red",t:"Тривога",d:"Думки біжать наперед і малюють погані варіанти."},
+  {k:"overwhelmed",q:"red",t:"Перевантаження",d:"Забагато всього одночасно: звуків, справ, людей, думок."},
+  {k:"angry",q:"red",t:"Злість",d:"Щось перетнуло межу або здається несправедливим."},
+  {k:"scared",q:"red",t:"Страх",d:"Відчуття загрози, за себе чи за когось."},
+  {k:"panic",q:"red",t:"Паніка",d:"Страх накриває хвилею, важко дихати і думати."},
+  {k:"rage",q:"red",t:"Лють",d:"Злість настільки сильна, що важко її втримати."},
+  // yellow
+  {k:"curious",q:"yellow",t:"Цікавість",d:"Хочеться дізнатися, спробувати, розібратись."},
+  {k:"cheerful",q:"yellow",t:"Бадьорість",d:"Є сили і легкість рухатися."},
+  {k:"playful",q:"yellow",t:"Грайливість",d:"Хочеться жартувати, дуріти, бавитись."},
+  {k:"glad",q:"yellow",t:"Радість",d:"Тепло й добре від того, що відбувається."},
+  {k:"proud",q:"yellow",t:"Гордість",d:"Щось вийшло, і це приємно визнати."},
+  {k:"confident",q:"yellow",t:"Впевненість",d:"Відчуття, що впораєшся."},
+  {k:"inspired",q:"yellow",t:"Натхнення",d:"Зʼявились ідеї і бажання їх робити."},
+  {k:"excited",q:"yellow",t:"Захват",d:"Дуже радісно, аж переповнює."},
+  {k:"euphoric",q:"yellow",t:"Ейфорія",d:"Пік радості, все здається можливим."},
+  // blue
+  {k:"bored",q:"blue",t:"Нудьга",d:"Нічого не чіпляє, час тягнеться."},
+  {k:"confused",q:"blue",t:"Розгубленість",d:"Незрозуміло, що робити і що відчуваєш."},
+  {k:"drained",q:"blue",t:"Виснаження",d:"Сили закінчились, навіть прості речі даються важко."},
+  {k:"sad",q:"blue",t:"Сум",d:"Чогось шкода або когось бракує."},
+  {k:"lonely",q:"blue",t:"Самотність",d:"Бракує близькості й відчуття, що поруч хтось є."},
+  {k:"guilty",q:"blue",t:"Провина і сором",d:"Відчуття, що зробили щось не так або що з тобою щось не так."},
+  {k:"apathy",q:"blue",t:"Апатія",d:"Нічого не хочеться і нічого не важливо. Це не лінь, це спосіб психіки зберегти сили."},
+  {k:"empty",q:"blue",t:"Порожнеча",d:"Ніби всередині вимкнули звук: ні радості, ні суму."},
+  {k:"depressed",q:"blue",t:"Пригніченість",d:"Важко, темно й безнадійно, ніби так буде завжди. Якщо триває тижнями, варто поговорити з фахівцем."},
+  // green
+  {k:"calm",q:"green",t:"Спокій",d:"Нічого не тисне, можна просто бути."},
+  {k:"relaxed",q:"green",t:"Розслабленість",d:"Тіло відпускає напругу."},
+  {k:"cozy",q:"green",t:"Затишок",d:"Тепло, мʼяко, безпечно."},
+  {k:"grateful",q:"green",t:"Вдячність",d:"Хочеться подякувати за те, що є."},
+  {k:"relieved",q:"green",t:"Полегшення",d:"Щось важке скінчилось або вирішилось."},
+  {k:"tender",q:"green",t:"Ніжність",d:"Хочеться піклуватися й обіймати."},
+  {k:"safe",q:"green",t:"Безпека",d:"Відчуття, що зараз нічого не загрожує."},
+  {k:"content",q:"green",t:"Задоволення",d:"Все достатньо добре, нічого не бракує."},
+  {k:"serene",q:"green",t:"Умиротворення",d:"Глибокий тихий спокій."},
+];
+const emoOf=k=>EMO.find(e=>e.k===k);
 const PLAN_KIND={game:{i:"🎮",t:"Гра"},watch:{i:"🎬",t:"Перегляд"},call:{i:"📞",t:"Розмова"},other:{i:"✨",t:"Інше"}};
 // State history within a day: what each field reads like, for the log on the cards and in pushes.
-const FNAME={energy:"сили",need:"треба",sleep:"сон",head:"голова",mood:"настрій",why:"причина"};
+const FNAME={energy:"сили",need:"треба",sleep:"сон",head:"голова",mood:"настрій",emo:"відчуття",why:"причина"};
 const POS_MOOD=["calm","happy","joy","cope"],NEG_MOOD=["tired","anx","scared","sad","hurt","cry","irr","empty"];
 const HEAD_SEV={ok:0,pain:1,prodrome:2,migraine:3};
 
@@ -139,20 +215,21 @@ applyTheme(ls("theme")||"apothecary");
 
 /* ---------- data ---------- */
 function myToday(){return me&&me.date===today()?me:{date:today()}}
-const NOTABLE=["need","sleep","head","energy","mood","whys"];
+const NOTABLE=["need","sleep","head","energy","mood","whys","emo","unsure"];
 function fieldText(k,d){
   if(k==="energy")return ELBL[d.energy]||"";
   if(k==="need")return d.need==="own"?(d.needText||""):((find(NEED,d.need)||{}).t||"").toLowerCase();
   if(k==="sleep")return labels(SLEEP,d.sleep).join(", ").toLowerCase();
   if(k==="head"){const h=find(HEAD,d.head);return h?h.t.toLowerCase()+((d.head==="pain"||d.head==="migraine")&&d.pain?" "+d.pain+"/10":""):""}
   if(k==="mood")return labels(MOOD,d.mood).join(", ").toLowerCase();
+  if(k==="emo")return [...(d.unsure?["не розумію свій стан"]:[]),...arr(d.emo).map(x=>(emoOf(x)||{}).t).filter(Boolean).map(t=>t.toLowerCase())].join(", ");
   return "";
 }
 const logLine=e=>e.k==="why"?"причина: «"+e.to+"»":FNAME[e.k]+": "+(e.from&&e.to?e.from+" → "+e.to:e.to||"прибрано");
 // Append to today's change log. Quick taps on the same thing within 3 minutes count as one change.
 function withLog(before,after){
   const log=[...arr(before.log)],now=Date.now();
-  ["energy","need","sleep","head","mood"].forEach(k=>{
+  ["energy","need","sleep","head","mood","emo"].forEach(k=>{
     const from=fieldText(k,before),to=fieldText(k,after);if(from===to)return;
     const last=log[log.length-1];
     if(last&&last.k===k&&now-last.ts<180000){if(last.from===to)log.pop();else{last.to=to;last.ts=now}}
@@ -168,11 +245,18 @@ function dirOf(a,b){
   cmp(a.energy||null,b.energy||null);
   const sev=d=>d.head in HEAD_SEV?HEAD_SEV[d.head]*10+((d.head==="pain"||d.head==="migraine")?(d.pain||0):0):null;
   const sb2=sev(b),sa=sev(a)??(sb2!=null?0:null);if(sa!=null&&sb2!=null)cmp(-sa,-sb2); // no head marked before = was ok
-  const ms=d=>arr(d.mood).filter(x=>POS_MOOD.includes(x)).length-arr(d.mood).filter(x=>NEG_MOOD.includes(x)).length;
-  if(arr(a.mood).length&&arr(b.mood).length)cmp(ms(a),ms(b));
+  const pos=d=>arr(d.mood).filter(x=>POS_MOOD.includes(x)).length+arr(d.emo).filter(x=>/yellow|green/.test((emoOf(x)||{}).q)).length;
+  const neg=d=>arr(d.mood).filter(x=>NEG_MOOD.includes(x)).length+arr(d.emo).filter(x=>/red|blue/.test((emoOf(x)||{}).q)).length+(d.unsure?1:0);
+  const hasMood=d=>arr(d.mood).length||arr(d.emo).length||d.unsure;
+  if(hasMood(a)&&hasMood(b))cmp(pos(a)-neg(a),pos(b)-neg(b));
   return up&&!down?"better":down&&!up?"worse":null;
 }
-const snap=d=>({energy:d.energy||0,head:d.head||null,pain:d.pain||0,mood:arr(d.mood)});
+const snap=d=>({energy:d.energy||0,head:d.head||null,pain:d.pain||0,mood:arr(d.mood),emo:arr(d.emo),unsure:!!d.unsure});
+// A hard moment: show "Обійняти" on the partner's card.
+function hardNow(d){
+  return d.energy===1||d.head==="migraine"||d.head==="prodrome"||(d.pain||0)>=6||has(d.sleep,"nightmares")||d.unsure
+    ||arr(d.mood).some(x=>NEG_MOOD.includes(x)&&x!=="tired")||arr(d.emo).some(x=>/red|blue/.test((emoOf(x)||{}).q));
+}
 const notifyState=debounce(async()=>{
   const cur=myToday();let base=ls("pushBase");if(!base||base.date!==today())base=null;
   const dir=base?dirOf(base.d,cur):null;
@@ -362,6 +446,14 @@ function stateRows(d){
     if(has(d.mood,"happy")||has(d.mood,"joy"))t.push("Добрий момент: запитай, що сьогодні порадувало.");
     rows.push({f:"mood",label:"Настрій: "+ml.join(", ").toLowerCase(),alert:false,tips:t});
   }
+  const em=arr(d.emo).map(emoOf).filter(Boolean);
+  if(em.length||d.unsure){
+    const qs=[...new Set(em.map(e=>e.q))];
+    const t=qs.map(q=>EMO_Q[q].tip);
+    if(d.unsure)t.unshift("Сам(а) не розуміє, що відчуває. Не питай «що сталося», краще запропонуй побути поряд або обійми.");
+    if(em.some(e=>e.k==="depressed"||e.k==="empty"))t.push("Якщо так уже кілька днів, мʼяко запропонуй поговорити з фахівцем. Без тиску.");
+    rows.push({f:"emo",label:"Відчуття: "+fieldText("emo",d),alert:qs.some(q=>q==="red"||q==="blue")||!!d.unsure,tips:t,emo:em});
+  }
   ESS.forEach(e=>{const a=d[e.k]||[];rows.push({label:e.t+": "+(a.length?a.length+", востаннє о "+hm(Math.max(...a)):"ще не було"),alert:essDue(e,d),tips:[],ess:e.k})});
   return rows;
 }
@@ -376,6 +468,11 @@ function personCard(id,d,isMe){
   const sm=el("small",null,d&&d.updated?(isToday?"оновлено о "+hm(d.updated):"востаннє "+dshort(d.updated)):"");
   if(fresh.size)sm.prepend(el("span","newbadge","є нове"));
   who.append(sm);c.append(who);
+  const st=statusInfo(profiles.get(id));
+  if(st){const p=profiles.get(id);const sl=el("div","status");sl.append(el("span",null,st.i+" "+st.t));
+    if(p.status_at)sl.append(el("small",null," з "+(new Date(p.status_at).toDateString()===new Date().toDateString()?hm(p.status_at):dshort(p.status_at)+" "+hm(p.status_at))));
+    c.append(sl);if(!isMe&&st.tip)c.append(el("p","tip",st.tip))}
+  if((!d||!isToday)&&statusInfo(profiles.get(id))){const st=statusInfo(profiles.get(id));c.append(el("div","status",st.i+" "+st.t))}
   if(!d||!isToday){c.append(el("p","empty",isMe?"Відміть свій стан у вкладці «Стан», і він зʼявиться тут для вас обох.":"Сьогодні стан ще не відмічено."));if(!isMe)c.append(nudgeRow(id));return c}
   const n=d.need==="own"&&d.needText?{t:d.needText,o:d.needText}:find(NEED,d.need);
   if(n){const nb=el("div","need"+(fresh.has("need")?" fresh":""),isMe?n.t:n.o);c.append(nb);if(!isMe&&n.tip)c.append(el("p","tip",n.tip))}
@@ -385,7 +482,10 @@ function personCard(id,d,isMe){
   stateRows(d).forEach(r=>{
     const tips=isMe?[]:r.tips;
     const cls="fact"+(r.alert?" alert":"")+(r.f&&fresh.has(r.f)?" fresh":"");
-    if(tips.length){chips=null;const s=el("div","staterow");s.append(el("span",cls,r.label));tips.forEach(t=>s.append(el("p","tip",t)));c.append(s)}
+    if(tips.length||r.emo){chips=null;const s=el("div","staterow");s.append(el("span",cls,r.label));tips.forEach(t=>s.append(el("p","tip",t)));
+      if(r.emo&&r.emo.length){const det=el("details","emodef");det.append(el("summary",null,"Що це означає"));
+        r.emo.forEach(e=>{const p=el("p");p.append(el("b","q-"+e.q,e.t+". "),document.createTextNode(e.d));det.append(p)});s.append(det)}
+      c.append(s)}
     else{if(!chips){chips=el("div","facts");c.append(chips)}chips.append(el("span",cls,r.label))}
   });
   const log=arr(d.log);
@@ -402,6 +502,7 @@ function nudgeRow(id,d){
   Object.keys(NUDGE).forEach(k=>{
     const e=find(ESS,k);
     if(d&&e&&!essDue(e,d))return;
+    if(k==="embrace"&&!(d&&d.date===today()&&hardNow(d)))return;
     const last=sentLast[k]||0,ago=Date.now()-last;
     if(last&&ago<60000){r.append(btn("nbtn sent","Надіслано ✓",()=>{}));return}
     if(last&&ago<NUDGE_GAP){
@@ -585,6 +686,7 @@ function closeShowForm(){if(pendingUrl)URL.revokeObjectURL(pendingUrl);$("showFo
 function renderState(d){
   const lvl=d.energy||0;
   document.querySelectorAll(".lvl").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.l===lvl)));
+  statusRow();emoMap(d);
   needRow(d);multiRow($("sleepChips"),SLEEP,"sleep",["good"]);chipRow($("headChips"),HEAD,"head");multiRow($("moodChips"),MOOD,"mood");
   const showPain=d.head==="pain"||d.head==="migraine",showSigns=d.head==="prodrome"||d.head==="migraine";
   $("painBox").hidden=!showPain;if(showPain)scaleRow($("painChips"),"pain");
@@ -593,6 +695,44 @@ function renderState(d){
   whysOf(d).forEach((w,i)=>{const li=el("li","item");const tx=el("div","txt");const inner=el("div",null,w.text);if(w.ts)inner.append(el("small",null,hm(w.ts)));tx.append(inner);li.append(tx);
     li.append(btn("del","×",()=>{const all=whysOf(myToday());all.splice(i,1);saveMe({whys:all})},"Прибрати причину"));wl.append(li)});
 }
+// "Що я зараз роблю" — saved on the profile, partner gets a push for military statuses.
+async function setStatus(status,text){
+  const patch={status:status||null,status_text:status==="own"?text:null,status_at:status?new Date().toISOString():null};
+  Object.assign(myProfile(),patch);render();
+  const {error}=await sb.from("profiles").update(patch).eq("id",uid);
+  if(error)return syncErr(error);saved();
+  if(status)sb.functions.invoke("notify",{body:{type:"status"}}).catch(()=>{});
+}
+function statusRow(){
+  const p=myProfile(),box=$("statusChips");box.replaceChildren();
+  (STATUS[p.status_set||"civil"]||STATUS.civil).forEach(o=>{const on=p.status===o.k;
+    const b=btn("chip",o.i+" "+o.t,()=>setStatus(on?null:o.k));b.setAttribute("aria-pressed",String(on));box.append(b)});
+  if(p.status==="own"&&p.status_text){const b=btn("chip","📍 "+p.status_text,()=>setStatus(null));b.setAttribute("aria-pressed","true");box.append(b)}
+  if($("statusForm").hidden)box.append(btn("chip add","+ Своє",()=>{$("statusForm").hidden=false;render();$("statusText").focus()}));
+}
+function emoMap(d){
+  const open=!!d.unsure||emoOpen;
+  $("unsureBtn").setAttribute("aria-pressed",String(!!d.unsure));
+  $("emoBox").hidden=!open;
+  if(!open)return;
+  const sel=arr(d.emo),grid=$("emoGrid");grid.replaceChildren();
+  ["red","yellow","blue","green"].forEach(q=>{
+    const list=EMO.filter(e=>e.q===q),tiers=[list.slice(0,3),list.slice(3,6),list.slice(6,9)];
+    // Intense feelings sit at the outer edges: top rows for the upper quadrants, bottom rows for the lower ones.
+    const rows=(q==="red"||q==="yellow")?[tiers[2],tiers[1],tiers[0]]:tiers;
+    const qd=el("div","emoq q-"+q);qd.setAttribute("aria-label",EMO_Q[q].t);
+    rows.forEach((row,ri)=>{const lvl=(q==="red"||q==="yellow")?2-ri:ri;const rd=el("div","emorow");qd.append(rd);
+      (q==="red"||q==="blue"?row:[...row].reverse()).forEach(e=>{const on=sel.includes(e.k);
+        const b=btn("emo-w t"+lvl,e.t,()=>{emoInfo=e.k;const next=on?sel.filter(x=>x!==e.k):[...sel,e.k].slice(-3);saveMe({emo:next})});
+        b.setAttribute("aria-pressed",String(on));rd.append(b)})});
+    grid.append(qd);
+  });
+  const inf=$("emoInfo");const e=emoOf(emoInfo)||emoOf(sel[sel.length-1]);
+  inf.replaceChildren();
+  if(e){inf.append(el("b","q-"+e.q,e.t),document.createTextNode(" — "+e.d))}
+  else inf.textContent="Торкнись слова, яке хоч трохи схоже. Можна до трьох. Тут зʼявиться, що воно означає.";
+}
+let emoOpen=false,emoInfo=null;
 // "Що мені зараз треба": built-in options, my own saved ones (synced, private) and "+ Своє".
 const ownNeeds=()=>((priv.get("needs_own")||{}).list)||[];
 function saveOwnNeed(text){putPriv("needs_own",{kind:"needs_own",list:[text,...ownNeeds().filter(x=>x!==text)].slice(0,6)})}
@@ -817,6 +957,10 @@ function renderSettings(){
   colorRow($("setColor"),p.color,async k=>{
     const {error}=await sb.from("profiles").update({color:k}).eq("id",uid);if(error)return syncErr(error);
     await loadProfiles();renderSettings();render()});
+  const ss=$("setStatusSet");ss.replaceChildren();
+  [["civil","Цивільні"],["military","Військові"]].forEach(([k,t])=>{const b=btn("chip",t,async()=>{
+    const {error}=await sb.from("profiles").update({status_set:k}).eq("id",uid);if(error)return syncErr(error);
+    await loadProfiles();renderSettings();render()});b.setAttribute("aria-pressed",String((p.status_set||"civil")===k));ss.append(b)});
   themeRow($("setTheme"),themeKey(),async k=>{
     ls("theme",k);applyTheme(k);
     const {error}=await sb.from("profiles").update({theme:k}).eq("id",uid);
@@ -847,6 +991,11 @@ $("whyForm").addEventListener("submit",e=>{
 $("toggleAll").addEventListener("click",()=>{showAll=!showAll;render()});
 $("needForm").addEventListener("submit",e=>{e.preventDefault();const text=$("needText").value.trim();if(!text)return;
   $("needText").value="";$("needForm").hidden=true;saveOwnNeed(text);saveMe({need:"own",needText:text})});
+$("statusForm").addEventListener("submit",e=>{e.preventDefault();const t=$("statusText").value.trim();if(!t)return;
+  $("statusText").value="";$("statusForm").hidden=true;setStatus("own",t)});
+$("statusCancel").addEventListener("click",()=>{$("statusText").value="";$("statusForm").hidden=true;render()});
+$("unsureBtn").addEventListener("click",()=>{const on=!myToday().unsure;emoOpen=on;saveMe({unsure:on})});
+$("emoToggle").addEventListener("click",()=>{emoOpen=!emoOpen||!!myToday().unsure;render()});
 $("planForm").addEventListener("submit",async e=>{
   e.preventDefault();const title=$("planText").value.trim(),cid=myProfile().couple_id;if(!title||!cid)return;
   const when=$("planAt").value;const row={couple_id:cid,author:uid,proposed_by:uid,kind:$("planKind").value,title,at:when?new Date(when).toISOString():null};
@@ -905,7 +1054,7 @@ function openEmoji(input,anchor){
   pop.style.top=(window.scrollY+(below?r.bottom+8:r.top-8-pop.offsetHeight))+"px";
 }
 document.addEventListener("click",e=>{if(!pop.hidden&&!pop.contains(e.target)&&!e.target.classList.contains("emojibtn"))pop.hidden=true});
-["why","newText","boxText","careText","needText","showCaption","planText"].forEach(id=>{const i=$(id);if(!i)return;const b=btn("emojibtn","☺",ev=>{ev.preventDefault();openEmoji(i,ev.currentTarget)},"Додати смайлик");i.after(b)});
+["why","newText","boxText","careText","needText","showCaption","planText","statusText"].forEach(id=>{const i=$(id);if(!i)return;const b=btn("emojibtn","☺",ev=>{ev.preventDefault();openEmoji(i,ev.currentTarget)},"Додати смайлик");i.after(b)});
 
 /* ---------- boot ---------- */
 setInterval(render,5*60*1000);

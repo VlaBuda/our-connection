@@ -20,13 +20,17 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
   mood[], whys[{text,ts}], water[ts], food[ts]. Partner can read, only owner writes.
 - `private_items` (tasks, daily care ticks `d_<date>`, custom care `care_custom`) — owner only.
 - `box` ("Для нас": tell/dream/talk, done_at/done_by for history) · `push_subscriptions` · `reminders_sent`.
-- `nudges` (water/food/rest/hug): one per kind per 2h from a sender (RLS `nudge_ok`); never deleted —
+- `nudges` (water/food/rest/embrace/hug): one per kind per 2h from a sender (RLS `nudge_ok`); never deleted —
   `dismissed_at`, `answered_at` (reply button → partner gets a thank-you), `thanks_seen_at`.
 - `shows` + private Storage bucket `shows` (`<couple_id>/<user_id>/<file>.jpg`): "Хочу тобі показати" photos.
 - `days.data.log` [{ts,k,from,to}]: today's state changes (energy/need/sleep/head/mood/why), shown on cards;
   "fresh" marks use localStorage `seenLog`. Push "стало краще/важче" compares with localStorage `pushBase`.
 - `plans` ("Наш час": game/watch/call/other, optional `at`, `proposed_by`, `agreed_at`, `done_at`); cron tick
   sends a reminder to both ~30 min before `at`.
+- Status "Що я зараз роблю" on `profiles` (status key or 'own' + status_text, status_at, status_set civil|military);
+  lists in `STATUS` (app.js); push to partner only for military statuses.
+- Emotion map (How We Feel style, `EMO`/`EMO_Q` in app.js): `days.data.emo[]` (≤3) + `unsure` flag.
+  `hardNow()` decides when the partner's card offers the "embrace" nudge.
 - Own "що мені треба": `days.data.need = "own"` + `needText`; saved list in `private_items` id `needs_own`.
 
 ## Applying changes

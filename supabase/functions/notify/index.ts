@@ -2,6 +2,7 @@
 //  - {type:"nudge", kind}          from the app: partner presses "нагадати попити" etc.
 //  - {type:"thanks", id}           from the app: I answered my partner's nudge ("Пʼю воду")
 //  - {type:"show", caption}        from the app: I shared a photo in "Хочу тобі показати"
+//  - {type:"status"}               from the app: I changed "Що я зараз роблю" (push only for military statuses)
 //  - {type:"plan", id, event}      from the app: "Наш час" — new plan, "я за", new time
 //  - {type:"state", dir, changes}  from the app: my state changed (dir = "better" | "worse" | absent)
 //  - {type:"tick"} + x-cron-secret from pg_cron: water / food / check-in reminders
@@ -154,6 +155,7 @@ const NUDGE_TEXT: Record<string, string> = {
   water: "нагадує тобі попити води",
   food: "нагадує тобі поїсти",
   rest: "нагадує тобі відпочити",
+  embrace: "обіймає тебе 🫂",
   hug: "думає про тебе",
 };
 // What the partner sees after a nudge was answered. Same words as in app.js (REPLY_THANKS).
@@ -161,6 +163,7 @@ const THANKS: Record<string, string> = {
   water: "Пʼю воду 💧 Дякую, що нагадуєш!",
   food: "Іду їсти 🍽 Дякую, що нагадуєш!",
   rest: "Роблю паузу 🌿 Дякую, що нагадуєш!",
+  embrace: "Дякую за обійми 🤍 Стало трохи тепліше",
   hug: "І я про тебе думаю 🤍",
 };
 const NEED_TEXT: Record<string, string> = {
@@ -179,6 +182,9 @@ function stateLines(d: Record<string, unknown>) {
   if (d.head === "migraine") lines.push("мігрень");
   else if (d.head === "prodrome") lines.push("наближається мігрень");
   if (d.energy === 1) lines.push("сил майже немає");
+  if (d.unsure) lines.push("не розуміє свій стан");
+  const heavy: Record<string, string> = { panic: "паніка", rage: "лють", depressed: "пригніченість", empty: "порожнеча", apathy: "апатія" };
+  for (const k of Object.keys(heavy)) if (has(d.emo, k)) lines.push(heavy[k]);
   if (has(d.mood, "cry")) lines.push("хочеться плакати");
   else if (has(d.mood, "scared")) lines.push("страшно");
   return lines;
@@ -234,6 +240,18 @@ Deno.serve(async (req) => {
       body: caption ? `Хоче тобі показати: ${caption}` : "Хоче тобі щось показати 📷",
       tag: "show",
     });
+    return json({ ok: true });
+  }
+
+  if (body.type === "status") {
+    // Only military statuses are worth a push; everyday ones are just visible on the card.
+    const STATUS_PUSH: Record<string, string> = {
+      position: "🪖 на позиції", task: "🎯 на завданні", duty: "🕑 на чергуванні", base: "🏢 у штабі або на базі",
+      training: "📋 на навчаннях", road: "🚙 у дорозі", rest: "🛌 відпочинок", offline: "📵 без звʼязку",
+    };
+    if ((me.status_set ?? "civil") !== "military" || !STATUS_PUSH[me.status]) return json({ ok: true, note: "no push" });
+    if (!(await allow(user.id, "status", 2))) return json({ ok: true, note: "too soon" });
+    await pushTo(partner.id, { title: name, body: STATUS_PUSH[me.status], tag: "status" });
     return json({ ok: true });
   }
 

@@ -298,3 +298,34 @@ input[type=datetime-local]{font:inherit;padding:10px 12px;border-radius:12px;bor
 .nextplan{background:var(--surface);border-radius:16px;padding:12px 16px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
 .nextplan .nprow{font-family:var(--display)}
 @media (max-width:700px){.tabs button{font-size:.74rem;padding:10px 3px}}
+
+/* ---------- status ---------- */
+.status{font-weight:600;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.status small{color:var(--muted);font-weight:500;font-size:.8rem}
+
+/* ---------- emotion map ---------- */
+.unsure{align-items:center;justify-content:flex-start}
+.emobox{display:flex;flex-direction:column;gap:10px}
+.emomap{display:flex;flex-direction:column;gap:6px}
+.ax,.axh{font-size:.75rem;color:var(--muted);text-align:center}
+.axh{display:flex;justify-content:space-between}
+.emogrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.emoq{border-radius:14px;padding:6px;display:flex;flex-direction:column;justify-content:space-between;gap:4px;min-width:0}
+.emoq.q-red{background:rgba(214,72,60,.22)}
+.emoq.q-yellow{background:rgba(232,196,72,.2)}
+.emoq.q-blue{background:rgba(80,130,220,.22)}
+.emoq.q-green{background:rgba(90,180,110,.2)}
+.emorow{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}
+.q-yellow .emorow,.q-green .emorow{justify-content:center}
+.emo-w{font:inherit;font-size:.8rem;font-weight:600;border:1.5px solid transparent;color:var(--ink);border-radius:99px;padding:5px 9px;cursor:pointer;background:rgba(0,0,0,.25)}
+@media (max-width:500px){.emo-w{font-size:.72rem;padding:4px 7px}}
+.q-red .emo-w.t1{background:rgba(214,72,60,.3)}.q-red .emo-w.t2{background:rgba(214,72,60,.5)}
+.q-yellow .emo-w.t1{background:rgba(232,196,72,.28)}.q-yellow .emo-w.t2{background:rgba(232,196,72,.45)}
+.q-blue .emo-w.t1{background:rgba(80,130,220,.3)}.q-blue .emo-w.t2{background:rgba(80,130,220,.5)}
+.q-green .emo-w.t1{background:rgba(90,180,110,.28)}.q-green .emo-w.t2{background:rgba(90,180,110,.45)}
+.emo-w[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 2px rgba(0,0,0,.4)}
+.emoinfo{margin:0;background:var(--surface);border-radius:12px;padding:10px 12px;font-size:.92rem}
+b.q-red{color:#f08a7e}b.q-yellow{color:#f1d06a}b.q-blue{color:#9cc0f5}b.q-green{color:#8fd6a0}
+.emodef{font-size:.85rem}
+.emodef summary{cursor:pointer;color:var(--muted)}
+.emodef p{margin:6px 0 0}
