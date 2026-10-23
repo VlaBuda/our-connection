@@ -417,6 +417,9 @@ details.fold:not([open]){opacity:.9}
 
 /* tab icons on phones */
 @media (max-width:700px){
-  .tabs button{font-size:.62rem;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.2}
-  .tabs button::before{content:attr(data-ico);font-size:1.15rem;line-height:1}
+  /* icon only; the current tab also shows its name (screen readers always get it from the text) */
+  .tabs{justify-content:space-around}
+  .tabs button{font-size:0;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.2;flex:1 1 0;min-width:40px}
+  .tabs button::before{content:attr(data-ico);font-size:1.35rem;line-height:1}
+  .tabs button[aria-current="true"]{font-size:.66rem;flex:1.6 1 0}
 }

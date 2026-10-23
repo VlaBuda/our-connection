@@ -63,7 +63,8 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
   and AI-upscaled `-hd` versions used on screens ≥900px (`HD_READY`).
 - Emoji picker on text inputs.
 - Collapsible blocks: `<details class="fold" data-fold="key">`, open state per device in localStorage `folds`; collapsed
-  summary text comes from `renderSums()`. On phones tabs show emoji icons (`data-ico`).
+  summary text comes from `renderSums()`. On phones tabs are icon-only (`data-ico`); only the
+  current tab shows its name, so more tabs can be added.
 - Settings dialog has tabs (Про мене · Вигляд · Сповіщення · Пара); theme picker is a dropdown with previews.
 
 ## Ideas not done yet
