@@ -61,6 +61,9 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
 - Long states have editable start date (`nsLongList`, date input) and duration (`durText`). Self-check dialog
   (`CHECK`, not a diagnosis) suggests long states; last result private in `private_items` "ns_check". Safety question → 7333.
 - Cycle symptoms (`CSYM`) carry `ph` (period/after/mid/pre/any) only for grouping; `cycPhase()` puts the likely group first.
+- NS_LONG / NS_EP carry `d` (plain explanation). «📖 Лише подивитись» in the НС block (`nsLook`, `nsPeek`) explains without
+  marking; cards have «Що це означає» for active states. Desktop: any element with `data-tip` shows a floating hover tip
+  (`.tipfloat`, only for hover+fine pointer); used on emotion words and НС chips.
 - Meds: when the list is non-empty, the meds section goes first in «Турбота» (`#medsSec.top`, CSS order).
 
 ## Applying changes

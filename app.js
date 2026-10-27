@@ -259,37 +259,37 @@ const EMO=[
 ];
 // "Нервова система": long states stay until removed; episodes are moments with a recovery tail ("післясмак").
 const NS_LONG=[
-  {k:"burnout",t:"Емоційне вигорання",tip:"Ресурсу мало вже давно. Менше прохань і рішень, більше простої турботи без очікувань."},
-  {k:"aut_burnout",t:"Аутистичне вигорання",tip:"Сил на звуки, людей, розмови й маскування дуже мало. Може гірше говорити й переносити шум. Тиша не про тебе: допомагай знімати навантаження."},
-  {k:"depressive",t:"Депресивний період",tip:"Навіть прості речі даються важко. Не «збирайся», а маленька турбота: нагадати поїсти, побути поряд. Якщо довго, мʼяко про фахівця."},
-  {k:"anxious",t:"Тривожний період",tip:"Тривога тримається фоном. Допомагає передбачуваність: кажи, коли зможеш вийти на звʼязок."},
-  {k:"overload",t:"Хронічне перевантаження",tip:"Подразників і справ давно забагато. Менше нового й несподіваного, більше тиші."},
-  {k:"hypervigil",t:"Постійна напруга, насторожі",tip:"Тіло давно в режимі небезпеки. Допомагає передбачуваність: попереджай про зміни, без різких новин і несподіванок."},
-  {k:"numb",t:"Емоційне оніміння",tip:"Почуття ніби вимкнені. Це захист психіки від перевантаження, а не байдужість до тебе."},
-  {k:"exec",t:"Важко почати будь-які справи",tip:"Це не лінь: мозок не може запустити дію. Допомагає побути на звʼязку, поки робиться, або назвати один крихітний крок."},
-  {k:"insomnia",t:"Тривалі проблеми зі сном",tip:"Давно не висипається, тому все дається важче. Бережи сон: без пізніх дзвінків без домовленості."},
-  {k:"irritable",t:"Дратівливий період",tip:"Дратує майже все, і це від виснаження. Не сприймай на свій рахунок, менше нових прохань."},
-  {k:"load",t:"Все тримається на мені",tip:"Давно все тримається на цій людині: побут, робота, рішення. Візьми на себе хоч одне рішення чи справу, якщо можеш."},
-  {k:"uncertainty",t:"Тривала невизначеність",tip:"Невідомість виснажує. Допомагає щось стабільне: дзвінок у той самий час, звичні маленькі ритуали."},
-  {k:"grief",t:"Період горя чи втрати",tip:"Горе не має строку. Не треба втішати чи підганяти, достатньо бути поряд і дозволяти сумувати."},
-  {k:"pain",t:"Тривалий біль або хвороба",tip:"Тіло давно болить, і це забирає сили на все інше. Менше очікувань, більше практичної допомоги."},
+  {k:"burnout",t:"Емоційне вигорання",d:"Довго віддаєш більше, ніж відновлюєш. Відпочинок майже не допомагає, зʼявляються цинізм, відстороненість, відчуття «мені вже все одно». Росте поступово, тижнями й місяцями.",tip:"Ресурсу мало вже давно. Менше прохань і рішень, більше простої турботи без очікувань."},
+  {k:"aut_burnout",t:"Аутистичне вигорання",d:"Виснаження в аутичних людей від довгого маскування, сенсорного й соціального навантаження. Гірше переносяться звуки, світло, люди; важче говорити; губляться навички, які були на автоматі. Може тривати місяцями.",tip:"Сил на звуки, людей, розмови й маскування дуже мало. Може гірше говорити й переносити шум. Тиша не про тебе: допомагай знімати навантаження."},
+  {k:"depressive",t:"Депресивний період",d:"Пригнічений настрій, порожнеча або важкість більшість днів, мало що тішить, сили й інтерес падають. Якщо так понад два тижні, варто поговорити з фахівцем: це лікується.",tip:"Навіть прості речі даються важко. Не «збирайся», а маленька турбота: нагадати поїсти, побути поряд. Якщо довго, мʼяко про фахівця."},
+  {k:"anxious",t:"Тривожний період",d:"Тривога тримається фоном майже весь час: думки біжать наперед, тіло напружене, важко розслабитись навіть без конкретної причини.",tip:"Тривога тримається фоном. Допомагає передбачуваність: кажи, коли зможеш вийти на звʼязок."},
+  {k:"overload",t:"Хронічне перевантаження",d:"Справ, людей і подразників давно більше, ніж нервова система встигає переварити. Нове й несподіване вибиває легше, ніж зазвичай.",tip:"Подразників і справ давно забагато. Менше нового й несподіваного, більше тиші."},
+  {k:"hypervigil",t:"Постійна напруга, насторожі",d:"Тіло живе в режимі небезпеки: здригаєшся від звуків, весь час насторожі, важко заснути й розслабитись. Часта реакція на довгий стрес, тривоги, війну.",tip:"Тіло давно в режимі небезпеки. Допомагає передбачуваність: попереджай про зміни, без різких новин і несподіванок."},
+  {k:"numb",t:"Емоційне оніміння",d:"Почуття ніби приглушені або вимкнені: ні радості, ні суму. Так психіка захищається, коли болю чи навантаження забагато.",tip:"Почуття ніби вимкнені. Це захист психіки від перевантаження, а не байдужість до тебе."},
+  {k:"exec",t:"Важко почати будь-які справи",d:"Хочеш і розумієш, що треба, але не можеш почати. Мозок не запускає дію, особливо коли справ багато чи вони нечіткі. Це не лінь.",tip:"Це не лінь: мозок не може запустити дію. Допомагає побути на звʼязку, поки робиться, або назвати один крихітний крок."},
+  {k:"insomnia",t:"Тривалі проблеми зі сном",d:"Давно не висипаєшся: важко заснути, прокидаєшся вночі чи зарано. Від недосипу все інше дається важче, а емоції гостріші.",tip:"Давно не висипається, тому все дається важче. Бережи сон: без пізніх дзвінків без домовленості."},
+  {k:"irritable",t:"Дратівливий період",d:"Терпіння дуже мало, дратують дрібниці й люди. Часто це ознака виснаження, а не характеру.",tip:"Дратує майже все, і це від виснаження. Не сприймай на свій рахунок, менше нових прохань."},
+  {k:"load",t:"Все тримається на мені",d:"Побут, робота, рішення давно тримаються на тобі, і передати нікому. Навантаження не лише в справах, а й у постійному «все памʼятати».",tip:"Давно все тримається на цій людині: побут, робота, рішення. Візьми на себе хоч одне рішення чи справу, якщо можеш."},
+  {k:"uncertainty",t:"Тривала невизначеність",d:"Невідомо, що буде далі: з роботою, з близькими, з життям. Невизначеність виснажує сама по собі, навіть коли нічого не стається.",tip:"Невідомість виснажує. Допомагає щось стабільне: дзвінок у той самий час, звичні маленькі ритуали."},
+  {k:"grief",t:"Період горя чи втрати",d:"Втрата людини, звʼязку, дому чи колишнього життя. Горе приходить хвилями, і в нього немає правильного строку.",tip:"Горе не має строку. Не треба втішати чи підганяти, достатньо бути поряд і дозволяти сумувати."},
+  {k:"pain",t:"Тривалий біль або хвороба",d:"Тіло довго болить або хворіє, і це забирає сили на все інше, навіть коли біль не в центрі уваги.",tip:"Тіло давно болить, і це забирає сили на все інше. Менше очікувань, більше практичної допомоги."},
 ];
 // How long a state has lasted, in plain words.
 function durText(since){const d=Math.max(0,Math.floor((Date.now()-since)/864e5));
   if(d<1)return "від сьогодні";if(d<14)return d+" дн.";if(d<60)return Math.round(d/7)+" тиж.";const m=Math.round(d/30.4);return m<24?m+" міс.":Math.floor(m/12)+" р."}
 const dlong=ts=>new Date(ts).toLocaleDateString("uk-UA",{day:"numeric",month:"short",year:new Date(ts).getFullYear()===new Date().getFullYear()?undefined:"numeric"});
 const NS_EP=[
-  {k:"shutdown",t:"Шатдаун",h:24,now:"Може не говорити й не відповідати. Не тисни: одне тепле повідомлення, яке не потребує відповіді.",
+  {k:"shutdown",t:"Шатдаун",d:"Нервова система вимикається від перевантаження: важко говорити, думати, рухатись, відповідати. Ззовні може виглядати як байдужість, але це спосіб захисту.",h:24,now:"Може не говорити й не відповідати. Не тисни: одне тепле повідомлення, яке не потребує відповіді.",
     after:"Після шатдауну нервова система ще виснажена: тихо, без рішень і розборів."},
-  {k:"meltdown",t:"Мелтдаун",h:24,now:"Це не про тебе і не вибір. Не сперечайся, не пояснюй, менше слів.",
+  {k:"meltdown",t:"Мелтдаун",d:"Перевантаження проривається назовні: сльози, крик, неможливість себе зупинити. Не вибір і не маніпуляція. Потрібні тиша і безпека, а не розбір.",h:24,now:"Це не про тебе і не вибір. Не сперечайся, не пояснюй, менше слів.",
     after:"Після мелтдауну буває соромно й порожньо. Без розборів «що це було», просто тепло."},
-  {k:"panic_attack",t:"Панічна атака",h:12,now:"Якщо на звʼязку: повільно дихати разом і коротко «я тут, це мине».",
+  {k:"panic_attack",t:"Панічна атака",d:"Раптова хвиля страху: серце калатає, бракує повітря, тремтить тіло, здається, що зараз станеться щось страшне. Зазвичай пік минає за 10–20 хвилин.",h:12,now:"Якщо на звʼязку: повільно дихати разом і коротко «я тут, це мине».",
     after:"Тіло ще втомлене й насторожі. Спокійний тон, без тривожних новин і тем."},
-  {k:"sensory",t:"Сенсорне перевантаження",h:6,now:"Текст замість дзвінка, мінімум слів.",
+  {k:"sensory",t:"Сенсорне перевантаження",d:"Звуки, світло, дотики, запахи раптом стають нестерпними. Хочеться сховатися, заткнути вуха, вимкнути все. Допомагають тиша й темрява.",h:6,now:"Текст замість дзвінка, мінімум слів.",
     after:"Чутливість ще підвищена: тихіше, простіше, менше нового."},
-  {k:"flashback",t:"Флешбек",h:24,now:"Коротко нагадай, що зараз інший час і ти поряд. Без розпитувань.",
+  {k:"flashback",t:"Флешбек",d:"Спогад про пережите накриває так, ніби це відбувається зараз: тіло реагує страхом, хоча загрози вже немає.",h:24,now:"Коротко нагадай, що зараз інший час і ти поряд. Без розпитувань.",
     after:"Може ще довго бути насторожі. Без різких тем і несподіванок."},
-  {k:"freeze",t:"Параліч дій",h:3,now:"Не виходить почати навіть просте. Допомагає назвати один крихітний крок або побути на звʼязку, поки робиться.",
+  {k:"freeze",t:"Параліч дій",d:"Застигання: не можеш почати навіть просте, ніби заблоковано. Буває від перевантаження, страху чи забагато рішень одночасно.",h:3,now:"Не виходить почати навіть просте. Допомагає назвати один крихітний крок або побути на звʼязку, поки робиться.",
     after:"Сил після ступору мало, не завалюй справами."},
 ];
 const nsOf=id=>{const n=(profiles.get(id)||{}).ns;return {long:arr(n&&n.long),episodes:arr(n&&n.episodes),defaults:(n&&n.defaults)||{}}};
@@ -677,6 +677,9 @@ function nsBlock(id,isMe){
     if(!isMe){const help=topOf(retrosOf(id,180).filter(x=>x.e.k===e.k),"help",4);
       if(help.length)r.append(el("p","tip","Зазвичай допомагає: "+help.map(x=>x.t.toLowerCase()).join(", ")+"."))}
     box.append(r)});
+  const defs=[...ns.long.map(l=>find(NS_LONG,l.k)),...eps.map(e=>epInfo(e.k))].filter(Boolean);
+  if(defs.length){const det=el("details","emodef");det.append(el("summary",null,"Що це означає"));
+    [...new Set(defs)].forEach(o=>{const p=el("p");p.append(el("b",null,o.t+". "),document.createTextNode(o.d));det.append(p)});box.append(det)}
   out.push(box);return out;
 }
 function personCard(id,d,isMe){
@@ -944,6 +947,7 @@ async function setNs(next){
   const {error}=await sb.from("profiles").update({ns:next}).eq("id",uid);
   if(error)return syncErr(error);saved();pingUpdate();
 }
+let nsLook=false,nsPeek=null;
 function toggleLong(k,text,since){
   const ns=nsOf(uid),on=ns.long.some(l=>l.k===k&&(k!=="own"||l.text===text));
   const long=on?ns.long.filter(l=>!(l.k===k&&(k!=="own"||l.text===text))):[...ns.long,{k,text:k==="own"?text:undefined,since:since||Date.now()}];
@@ -960,19 +964,32 @@ function patchEpisode(id,patch){const ns=nsOf(uid);setNs({...ns,episodes:ns.epis
 let epEdit=null;
 function nsRow(){
   const ns=nsOf(uid),lb=$("nsLong");lb.replaceChildren();
-  NS_LONG.forEach(o=>{const on=ns.long.some(l=>l.k===o.k);const b=btn("chip warn",o.t,()=>toggleLong(o.k));b.setAttribute("aria-pressed",String(on));lb.append(b)});
+  // In "look" mode a tap only explains the state; marking is a separate button in the info box.
+  $("nsLook").setAttribute("aria-pressed",String(nsLook));
+  const peek=(kind,k)=>{nsPeek=nsPeek&&nsPeek.k===k&&nsPeek.kind===kind?null:{kind,k};render()};
+  NS_LONG.forEach(o=>{const on=ns.long.some(l=>l.k===o.k);const b=btn("chip warn"+(nsLook&&nsPeek&&nsPeek.k===o.k?" peek":""),o.t,()=>nsLook?peek("long",o.k):toggleLong(o.k));
+    b.setAttribute("aria-pressed",String(on));b.dataset.tip=o.d;lb.append(b)});
   ns.long.filter(l=>l.k==="own").forEach(l=>{const b=btn("chip warn",l.text,()=>toggleLong("own",l.text));b.setAttribute("aria-pressed","true");lb.append(b)});
   if($("nsForm").hidden)lb.append(btn("chip add","+ Своє",()=>{$("nsForm").hidden=false;render();$("nsText").focus()}));
   // Active long states with "since" date: often you notice a state only months after it began.
   const ll=$("nsLongList");ll.replaceChildren();
-  ns.long.forEach((l,i)=>{const li=el("li","item");const tx=el("div","txt");const inner=el("div",null,longLabel(l));
+  ns.long.forEach((l,i)=>{const li=el("li","item");const tx=el("div","txt");const inner=el("div",null,longLabel(l));const lin=find(NS_LONG,l.k);if(lin)inner.dataset.tip=lin.d;
     inner.append(el("small",null,l.since?"триває "+durText(l.since)+". Якщо почалось раніше, зміни дату":"коли почалось?"));tx.append(inner);li.append(tx);
     const inp=el("input");inp.type="date";inp.max=today();if(l.since)inp.value=dkey(new Date(l.since));inp.setAttribute("aria-label","З якого часу: "+longLabel(l));
     inp.addEventListener("change",()=>{if(!inp.value)return;const t=dparse(inp.value).getTime();const cur=nsOf(uid);
       setNs({...cur,long:cur.long.map((x,j)=>j===i?Object.assign({},x,{since:Math.min(t,Date.now())}):x)})});
     li.append(inp,btn("del","×",()=>toggleLong(l.k,l.text),"Зняти «"+longLabel(l)+"»"));ll.append(li)});
   const eb=$("nsEp");eb.replaceChildren();
-  NS_EP.forEach(o=>eb.append(btn("chip","⚡ "+o.t,()=>addEpisode(o.k))));
+  NS_EP.forEach(o=>{const b=btn("chip"+(nsLook&&nsPeek&&nsPeek.k===o.k?" peek":""),"⚡ "+o.t,()=>nsLook?peek("ep",o.k):addEpisode(o.k));b.dataset.tip=o.d;eb.append(b)});
+  const inf=$("nsInfo");inf.replaceChildren();inf.hidden=!nsLook;
+  if(nsLook){const o=nsPeek&&find(nsPeek.kind==="long"?NS_LONG:NS_EP,nsPeek.k);
+    if(!o)inf.textContent="Торкнись стану чи епізоду, щоб прочитати, що він означає. Нічого не відмітиться, доки не натиснеш кнопку тут.";
+    else{inf.append(el("b",null,o.t),document.createTextNode(" — "+o.d));
+      if(nsPeek.kind==="long"){const tp=el("p","tip","Що побачить партнер: "+o.tip);inf.append(tp)}
+      const r=el("span","emoact");
+      if(nsPeek.kind==="long"){const on=ns.long.some(l=>l.k===o.k);r.append(btn("btn sm",on?"Зняти":"Так, це про мене",()=>toggleLong(o.k)))}
+      else r.append(btn("btn sm","Відмітити епізод зараз",()=>{addEpisode(o.k);nsPeek=null}));
+      inf.append(r)}}
   const al=$("nsActive");al.replaceChildren();
   activeEpisodes(uid).forEach(e=>{const info=epInfo(e.k);const li=el("li","item");const tx=el("div","txt");const inner=el("div",null,info.t);
     inner.append(el("small",null,(epPhase(e)==="now"?"зараз":"відновлення")+" · "+untilText(e,uid)));
@@ -1085,7 +1102,7 @@ function emoMap(d){
     saveMe({emo:on?sel.filter(x=>x!==e.k):[...sel,e.k]})};
   // In "look" mode a tap only shows what the word means; choosing is a separate button under it.
   const word=e=>{const b=btn("emo-w t"+e.i+" q-"+e.q+(emoLook&&emoInfo===e.k?" peek":""),e.t,()=>{if(emoLook){emoInfo=emoInfo===e.k?null:e.k;render()}else pick(e)});
-    b.setAttribute("aria-pressed",String(sel.includes(e.k)));return b};
+    b.setAttribute("aria-pressed",String(sel.includes(e.k)));b.dataset.tip=e.d;return b};
   $("emoLook").setAttribute("aria-pressed",String(emoLook));
   // chosen
   const ch=$("emoChosen");ch.replaceChildren();
@@ -1839,6 +1856,17 @@ $("statusForm").addEventListener("submit",e=>{e.preventDefault();const t=$("stat
 $("statusCancel").addEventListener("click",()=>{$("statusText").value="";$("statusForm").hidden=true;render()});
 $("unsureBtn").addEventListener("click",()=>{const on=!myToday().unsure;emoOpen=on;saveMe({unsure:on})});
 $("emoSearch").addEventListener("input",()=>render());
+$("nsLook").addEventListener("click",()=>{nsLook=!nsLook;nsPeek=null;render()});
+// Desktop: hovering anything with data-tip shows its description in a floating box (phones use the "📖" modes instead).
+(()=>{const mq=matchMedia("(hover: hover) and (pointer: fine)");const tip=el("div","tipfloat");tip.hidden=true;document.body.append(tip);
+  let cur=null;
+  const place=t=>{const r=t.getBoundingClientRect(),w=Math.min(320,innerWidth-16);tip.style.maxWidth=w+"px";tip.hidden=false;
+    const tr=tip.getBoundingClientRect();let x=r.left+r.width/2-tr.width/2;x=Math.max(8,Math.min(x,innerWidth-tr.width-8));
+    let y=r.top-tr.height-8;if(y<8)y=r.bottom+8;tip.style.left=x+"px";tip.style.top=y+"px"};
+  document.addEventListener("mouseover",e=>{if(!mq.matches)return;const t=e.target.closest&&e.target.closest("[data-tip]");
+    if(t===cur)return;cur=t;if(!t){tip.hidden=true;return}tip.textContent=t.dataset.tip;place(t)});
+  document.addEventListener("scroll",()=>{if(cur&&cur.isConnected&&!tip.hidden)place(cur);else{tip.hidden=true;cur=null}},true);
+  document.addEventListener("click",()=>{tip.hidden=true;cur=null},true)})();
 $("emoLook").addEventListener("click",()=>{emoLook=!emoLook;emoInfo=null;render()});
 $("emoToggle").addEventListener("click",()=>{emoOpen=!emoOpen||!!myToday().unsure;render()});
 $("planForm").addEventListener("submit",async e=>{

@@ -144,6 +144,8 @@
       <div id="painBox" class="reveal" hidden><p class="sub">Наскільки болить <span class="opt">1 ледь, 10 нестерпно</span></p><div class="chips" id="painChips"></div></div>
       <div id="signBox" class="reveal" hidden><p class="sub">Що відчуваєш <span class="opt">можна кілька</span></p><div class="chips" id="signChips"></div></div>
       <div class="nsbox"><details class="fold" data-fold="ns" open><summary><span class="foldt"><span class="sub">Нервова система</span></span><span class="foldsum" data-sum="ns"></span></summary><div class="foldbody">        <p class="hint">Тривалий стан видно, доки не знімеш. Епізод відмічай, коли стався: партнер бачитиме його і час відновлення після нього.</p>
+        <div class="row emolook"><button class="chip" type="button" id="nsLook" aria-pressed="false">📖 Лише подивитись, що означає</button></div>
+        <p class="emoinfo" id="nsInfo" aria-live="polite" hidden></p>
         <p class="sub small">Тривалий стан</p>
         <div class="chips" id="nsLong"></div>
         <form id="nsForm" class="inline" hidden><input type="text" id="nsText" maxlength="60" placeholder="Своїми словами" autocomplete="off" aria-label="Свій тривалий стан"><button class="btn" type="submit">Додати</button><button class="link" type="button" id="nsCancel">Скасувати</button></form>

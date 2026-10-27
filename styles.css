@@ -460,3 +460,9 @@ details.fold:not([open]){opacity:.9}
 .cycgroup.now>.sub::after{content:" · зараз орієнтовно ця фаза";text-transform:none;letter-spacing:0;font-weight:500;color:var(--accent)}
 #medsSec.top{order:-1}
 .err.ok{color:var(--ink)}
+/* ---- підказки при наведенні (компʼютер) ---- */
+.tipfloat{position:fixed;z-index:1000;pointer-events:none;background:#1a1c15;color:var(--ink);border:1px solid var(--accent);border-radius:12px;padding:8px 12px;font-size:.88rem;line-height:1.4;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+.tipfloat[hidden]{display:none}
+@media (hover:hover) and (pointer:fine){[data-tip]{cursor:help}.chip[data-tip],.emo-w[data-tip]{cursor:pointer}}
+.chip.peek{outline:2px dashed var(--ink);outline-offset:2px}
+.emoinfo .tip{margin-top:8px}
