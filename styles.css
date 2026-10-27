@@ -423,3 +423,39 @@ details.fold:not([open]){opacity:.9}
   .tabs button::before{content:attr(data-ico);font-size:1.35rem;line-height:1}
   .tabs button[aria-current="true"]{font-size:.66rem;flex:1.6 1 0}
 }
+
+/* ---- допомога зараз, дихання ---- */
+.need.urgent{background:var(--low-soft);color:var(--low)}
+.helpbox:empty{display:none}
+.helpbox>.link{align-self:flex-start}
+.helpcard{display:flex;flex-direction:column;gap:10px;background:var(--surface);border-radius:14px;padding:12px 14px;border-left:3px solid var(--accent)}
+.helpcard.hard{border-left-color:var(--low)}
+.helpcard .sub{margin:0}
+.helplist{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:.92rem}
+.breathbtn{align-self:flex-start}
+.breath{display:none;justify-content:center;padding:6px 0}
+.breath.on{display:flex}
+.breathc{width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,var(--accent-soft) 30%,transparent 72%);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;transform:scale(.55);transition:transform 6s ease-in-out}
+.breath.in .breathc{transform:scale(1);transition-duration:4s}
+.breathl{font-weight:700;font-size:1.05rem;white-space:nowrap}
+.crisis{margin:0;font-size:.9rem;padding:10px 12px;border-radius:12px;background:var(--low-soft)}
+.crisis a{color:var(--ink);font-weight:700}
+.feelhint{font-style:italic}
+/* ---- відчуття: лише подивитись ---- */
+.emolook{justify-content:flex-start}
+.emo-w.peek{outline:2px dashed var(--ink);outline-offset:2px}
+.emoact{display:flex;margin-top:8px}
+/* ---- тривалі стани з датами ---- */
+.nslong:empty{display:none}
+.nslong .item input[type="date"]{font:inherit;background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:4px 8px}
+.nslong .txt small{display:block}
+/* ---- самоперевірка ---- */
+.chk{display:flex;flex-direction:column;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}
+.chk p{margin:0}
+.chkres{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:12px;background:var(--surface)}
+.chkres h3{margin:0;font-size:1rem}
+/* ---- цикл: групи самопочуття ---- */
+.cycgroups{display:flex;flex-direction:column;gap:14px}
+.cycgroup{display:flex;flex-direction:column;gap:6px}
+.cycgroup.now>.sub::after{content:" · зараз орієнтовно ця фаза";text-transform:none;letter-spacing:0;font-weight:500;color:var(--accent)}
+#medsSec.top{order:-1}

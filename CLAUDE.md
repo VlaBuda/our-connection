@@ -47,6 +47,17 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
   Notify tick sends "скоро місячні" 2 days ahead (to partner only if share.forecast).
 - Meds: `private_items` "meds" {list:[{id,name,time}]}, ticks in `d_<date>.meds`; tick reminds within 45 min of time.
 - Own "що мені треба": `days.data.need = "own"` + `needText`; saved list in `private_items` id `needs_own`.
+- NEED "help" ("Мені зараз дуже важко") is urgent: red on the card, counts in `hardNow()`.
+- "Що може трохи допомогти" under the need chips (`HELP`, `helpLevel()`, `helpTags()`): opens by itself when the state is hard,
+  level 2 (despair/hopeless/crushed/depressed, need help, episode "now") adds Lifeline Ukraine 7333 / 112. Breathing timer
+  4 in / 6 out, 60 s, state in `breathT0` so re-renders don't stop it.
+- Emotion map has a "📖 Лише подивитись" mode (`emoLook`): taps only show the meaning, choosing is a separate button.
+  `FEEL_HINT` — daily line that feelings are allowed.
+- Sleep: more options + `days.data.sleepH` (rough hours, `SLEEP_H`). Head: `postdrome` ("Після мігрені"); SIGNS extended.
+- Long states have editable start date (`nsLongList`, date input) and duration (`durText`). Self-check dialog
+  (`CHECK`, not a diagnosis) suggests long states; last result private in `private_items` "ns_check". Safety question → 7333.
+- Cycle symptoms (`CSYM`) carry `ph` (period/after/mid/pre/any) only for grouping; `cycPhase()` puts the likely group first.
+- Meds: when the list is non-empty, the meds section goes first in «Турбота» (`#medsSec.top`, CSS order).
 
 ## Applying changes
 - SQL changes: add a new file in `supabase/migrations/` and ask the user to run it in Supabase SQL Editor.
@@ -57,7 +68,7 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
 - The user is non-technical-ish (PM background); give step-by-step instructions in Ukrainian.
 
 ## UI
-- Tabs: Ми (two cards, partner's advice under each state; "Хочу тобі показати" photo feed) · Стан · Турбота (now, water/food with
+- Tabs: Ми (two cards, partner's advice under each state; "Хочу тобі показати" photo feed) · Стан (сили → як почуваюсь → що треба → сон → голова → НС) · Турбота (now, water/food with
   editable times, self-care by energy level, meds, tasks) · Цикл (only when enabled) · Наш час (plans, ideas, history) · Для нас (with history) · Статистика.
 - Her colour red, his yellow. 13 themes in `THEMES` (app.js); images in `themes/` with `-sm` previews
   and AI-upscaled `-hd` versions used on screens ≥900px (`HD_READY`).

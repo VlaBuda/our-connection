@@ -105,30 +105,37 @@
         <button class="lvl" data-l="3" aria-pressed="false"><span class="bars"><i></i><i></i><i></i><i></i></span>Норм</button>
         <button class="lvl" data-l="4" aria-pressed="false"><span class="bars"><i></i><i></i><i></i><i></i></span>Розгін</button>
       </div>
-      <p class="sub">Що мені зараз треба</p>
-      <div class="chips" id="needChips"></div>
-      <form id="needForm" class="inline" hidden><input type="text" id="needText" maxlength="120" placeholder="Що тобі зараз треба, своїми словами" autocomplete="off" aria-label="Своє «що мені зараз треба»"><button class="btn" type="submit">Додати</button><button class="link" type="button" id="needCancel">Скасувати</button></form>
-      <p class="sub">Сон <span class="opt">можна кілька</span></p>
-      <div class="chips" id="sleepChips"></div>
-      <p class="sub">Голова</p>
-      <div class="chips" id="headChips"></div>
-      <div id="painBox" class="reveal" hidden><p class="sub">Наскільки болить <span class="opt">1 ледь, 10 нестерпно</span></p><div class="chips" id="painChips"></div></div>
-      <div id="signBox" class="reveal" hidden><p class="sub">Що відчуваєш <span class="opt">можна кілька</span></p><div class="chips" id="signChips"></div></div>
-      <p class="sub">Настрій <span class="opt">можна кілька</span></p>
+      <p class="sub">Як я себе почуваю <span class="opt">можна кілька</span></p>
+      <p class="hint feelhint" id="feelHint"></p>
       <div class="chips" id="moodChips"></div>
       <div class="row unsure"><button class="chip warn" type="button" id="unsureBtn" aria-pressed="false">🌀 Не розумію свій стан</button><button class="link" type="button" id="emoToggle">Підібрати точніше слово</button></div>
       <div id="emoBox" class="emobox" hidden>
         <div class="emochosen" id="emoChosen"></div>
         <div class="emomap"><span class="ax">↑ більше енергії</span><div class="emogrid" id="emoGrid"></div><span class="ax">↓ менше енергії</span>
           <div class="axh"><span>← неприємно</span><span>приємно →</span></div></div>
+        <div class="row emolook"><button class="chip" type="button" id="emoLook" aria-pressed="false">📖 Лише подивитись, що означає</button></div>
         <input type="search" id="emoSearch" placeholder="Або знайди слово: туга, сором, шатдаун…" autocomplete="off" aria-label="Знайти відчуття">
         <div class="emowords" id="emoWords"></div>
         <p class="emoinfo" id="emoInfo" aria-live="polite"></p>
       </div>
+      <p class="sub">Що мені зараз треба</p>
+      <div class="chips" id="needChips"></div>
+      <div id="helpBox" class="helpbox"></div>
+      <form id="needForm" class="inline" hidden><input type="text" id="needText" maxlength="120" placeholder="Що тобі зараз треба, своїми словами" autocomplete="off" aria-label="Своє «що мені зараз треба»"><button class="btn" type="submit">Додати</button><button class="link" type="button" id="needCancel">Скасувати</button></form>
+      <p class="sub">Сон <span class="opt">можна кілька</span></p>
+      <div class="chips" id="sleepChips"></div>
+      <p class="sub small">Скільки приблизно спав(ла)</p>
+      <div class="chips" id="sleepHChips"></div>
+      <p class="sub">Голова</p>
+      <div class="chips" id="headChips"></div>
+      <div id="painBox" class="reveal" hidden><p class="sub">Наскільки болить <span class="opt">1 ледь, 10 нестерпно</span></p><div class="chips" id="painChips"></div></div>
+      <div id="signBox" class="reveal" hidden><p class="sub">Що відчуваєш <span class="opt">можна кілька</span></p><div class="chips" id="signChips"></div></div>
       <div class="nsbox"><details class="fold" data-fold="ns" open><summary><span class="foldt"><span class="sub">Нервова система</span></span><span class="foldsum" data-sum="ns"></span></summary><div class="foldbody">        <p class="hint">Тривалий стан видно, доки не знімеш. Епізод відмічай, коли стався: партнер бачитиме його і час відновлення після нього.</p>
         <p class="sub small">Тривалий стан</p>
         <div class="chips" id="nsLong"></div>
         <form id="nsForm" class="inline" hidden><input type="text" id="nsText" maxlength="60" placeholder="Своїми словами" autocomplete="off" aria-label="Свій тривалий стан"><button class="btn" type="submit">Додати</button><button class="link" type="button" id="nsCancel">Скасувати</button></form>
+        <ul class="list nslong" id="nsLongList"></ul>
+        <div class="row"><button class="ghost sm" type="button" id="nsCheckBtn">🧭 Не знаю, як це назвати? Самоперевірка</button></div>
         <p class="sub small">Епізод: щойно було або є зараз</p>
         <div class="chips" id="nsEp"></div>
         <ul class="list" id="nsActive"></ul>
@@ -157,7 +164,7 @@
       </form>
 </div></details>
     </section>
-    <section>
+    <section id="medsSec">
 <details class="fold" data-fold="meds" open><summary><h2 class="foldt">Ліки й вітаміни</h2><span class="foldsum" data-sum="meds"></span></summary><div class="foldbody">      <p class="hint">Бачиш тільки ти. У вказаний час прийде нагадування. Назву можна писати як завгодно: її видно в сповіщенні.</p>
       <ul class="list" id="meds"></ul>
       <p class="hint" id="medHint" hidden>Якщо лікар не казав інакше: залізо зазвичай краще засвоюється окремо від чаю, кави й молочного.</p>
@@ -184,11 +191,11 @@
     <section class="cycbox" id="cycBox">
       <p class="hint">Тільки твоє. Партнер бачить лише те, що ти дозволиш у налаштуваннях → «Цикл».</p>
         <div class="cychead" id="cycHead"></div>
+      <details class="fold" data-fold="cycsym" open><summary><h2 class="foldt">Самопочуття</h2><span class="foldsum" data-sum="cycsym"></span></summary><div class="foldbody"><p class="hint">Можна кілька. Згруповано за тим, коли таке зазвичай буває, але відмічай будь-що будь-коли: твій цикл може бути своїм.</p><div id="cycSym" class="cycgroups"></div>
+</div></details>
       <details class="fold" data-fold="cyctoday" open><summary><h2 class="foldt">Сьогодні</h2><span class="foldsum" data-sum="cyctoday"></span></summary><div class="foldbody">        <p class="sub small">Виділення</p><div class="chips" id="cycFlow"></div>
         <p class="sub small">Біль</p><div class="chips" id="cycPain"></div>
         <p class="sub small">Лібідо</p><div class="chips" id="cycLibido"></div>
-</div></details>
-      <details class="fold" data-fold="cycsym" open><summary><h2 class="foldt">Самопочуття</h2><span class="foldsum" data-sum="cycsym"></span></summary><div class="foldbody"><p class="hint">Можна кілька.</p><div class="chips" id="cycSym"></div>
 </div></details>
       <details class="fold" data-fold="cycdates" ><summary><h2 class="foldt">Дати місячних <span id="cycCount"></span></h2><span class="foldsum" data-sum="cycdates"></span></summary><div class="foldbody">
           <form id="cycAdd" class="inline"><input type="date" id="cycDate" aria-label="Дата початку місячних"><button class="btn" type="submit">Додати початок</button></form>
@@ -284,6 +291,14 @@
     <div class="row sethead"><h2>Розбір епізоду</h2></div>
     <div id="retroBody" class="retrobody"></div>
     <div class="row retrofoot"><button class="ghost" id="retroCancel" type="button">Закрити</button><button class="btn" id="retroSave" type="button">Зберегти</button></div>
+  </div>
+</dialog>
+
+<dialog id="nsCheckDlg" class="setdlg retrodlg">
+  <div class="settings">
+    <div class="row sethead"><h2>Що зі мною останнім часом?</h2></div>
+    <div id="nsCheckBody" class="retrobody"></div>
+    <div class="row retrofoot"><button class="ghost" id="nsCheckClose" type="button">Закрити</button><button class="btn" id="nsCheckNext" type="button">Подивитись результат</button></div>
   </div>
 </dialog>
 

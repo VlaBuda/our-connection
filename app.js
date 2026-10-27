@@ -49,10 +49,23 @@ const NEED=[
   {k:"text",t:"Напиши мені щось",o:"Будь-яке повідомлення зараз допоможе",tip:"Фото, стікер чи дрібниця з дня, неважливо що."},
   {k:"know",t:"Просто знай, без питань",o:"Просто знай. Без питань",tip:"Питання зараз забирають сили. Можна просто написати «я поряд»."},
   {k:"alone",t:"Хочу побути сам(а)",o:"Потрібен час наодинці",tip:"Це не про тебе. Дай трохи простору і напиши пізніше."},
-  {k:"together",t:"Хочу побути разом",o:"Хочеться побути разом",tip:"Дзвінок, голосове або спільна справа на відстані."}];
-const SLEEP=[{k:"good",t:"Добре"},{k:"little",t:"Мало"},{k:"bad",t:"Погано"},{k:"woke",t:"Часті пробудження"},{k:"dreams",t:"Були сни",warn:1},{k:"nightmares",t:"Кошмари",warn:1}];
-const HEAD=[{k:"ok",t:"Ок"},{k:"pain",t:"Болить"},{k:"prodrome",t:"Наближається мігрень",warn:1},{k:"migraine",t:"Мігрень",warn:1}];
-const SIGNS=[{k:"aura",t:"Аура, мерехтіння"},{k:"light",t:"Ріже світло"},{k:"sound",t:"Ріжуть звуки"},{k:"smell",t:"Запахи"},{k:"nausea",t:"Нудить"},{k:"neck",t:"Тягне шию"},{k:"fog",t:"Туман у голові"},{k:"yawn",t:"Позіхання, сонливість"},{k:"crave",t:"Тягне на солодке"}];
+  {k:"together",t:"Хочу побути разом",o:"Хочеться побути разом",tip:"Дзвінок, голосове або спільна справа на відстані."},
+  {k:"listen",t:"Вислухай, без порад",o:"Хочеться виговоритись, поради зараз не потрібні",tip:"Слухай і кажи «розумію», «це справді важко». Рішення не шукай, якщо не просить."},
+  {k:"distract",t:"Відволічи мене",o:"Хочеться відволіктись",tip:"Розкажи щось зі свого дня, скинь мем чи смішне фото. Про важке зараз не треба."},
+  {k:"reassure",t:"Скажи, що все буде добре",o:"Потрібно почути, що все буде добре",tip:"Прості слова: «ми впораємось», «я з тобою». Можна повторити, навіть якщо вже казав(ла)."},
+  {k:"help",t:"Мені зараз дуже важко",o:"Зараз дуже важко",tip:"Напиши або подзвони, щойно зможеш. Не треба знаходити ідеальних слів: «я тут, я з тобою» вже багато.",warn:1}];
+const SLEEP=[{k:"good",t:"Добре"},{k:"little",t:"Мало"},{k:"much",t:"Забагато"},{k:"bad",t:"Погано"},{k:"cantfall",t:"Важко заснути"},{k:"woke",t:"Часті пробудження"},
+  {k:"early",t:"Прокидання зарано"},{k:"insomnia",t:"Майже не спав(ла)",warn:1},{k:"unrefreshed",t:"Сон не відновив сили"},{k:"nap",t:"Спав(ла) вдень"},
+  {k:"alarms",t:"Тривоги, вибухи вночі",warn:1},{k:"dreams",t:"Були сни",warn:1},{k:"nightmares",t:"Кошмари",warn:1}];
+// Rough hours of sleep, one choice (days.data.sleepH).
+const SLEEP_H=[{k:"lt4",t:"менше 4 год"},{k:"4_6",t:"4–6 год"},{k:"6_8",t:"6–8 год"},{k:"8_10",t:"8–10 год"},{k:"gt10",t:"понад 10 год"}];
+const SLEEP_BAD=["little","bad","woke","cantfall","early","insomnia","unrefreshed","alarms","nightmares"];
+const HEAD=[{k:"ok",t:"Ок"},{k:"pain",t:"Болить"},{k:"prodrome",t:"Наближається мігрень",warn:1},{k:"migraine",t:"Мігрень",warn:1},{k:"postdrome",t:"Після мігрені",warn:1}];
+const SIGNS=[{k:"aura",t:"Аура, мерехтіння"},{k:"light",t:"Ріже світло"},{k:"sound",t:"Ріжуть звуки"},{k:"smell",t:"Запахи"},{k:"nausea",t:"Нудить"},{k:"neck",t:"Тягне шию"},{k:"fog",t:"Туман у голові"},{k:"yawn",t:"Позіхання, сонливість"},{k:"crave",t:"Тягне на солодке"},
+  {k:"pee",t:"Часто хочеться в туалет"},{k:"thirst",t:"Спрага"},{k:"food",t:"Тягне на певну їжу"},{k:"moody",t:"Перепади настрою, дратівливість"},
+  {k:"words",t:"Важко підбирати слова"},{k:"tingle",t:"Поколювання, оніміння"},{k:"skin",t:"Шкіра болить від дотику"},{k:"eyes",t:"Біль чи тиск в очах"},
+  {k:"nose",t:"Закладає ніс, сльозяться очі"},{k:"chills",t:"Мерзнуть руки, морозить"},{k:"stomach",t:"Живіт, здуття"},{k:"dizzy",t:"Запаморочення"},
+  {k:"heavy",t:"Важкість, ломота в тілі"},{k:"tired",t:"Сильна втома"}];
 const MOOD=[{k:"calm",t:"Спокійно"},{k:"happy",t:"Щасливо"},{k:"joy",t:"Радісно"},{k:"cope",t:"Я справлюсь"},{k:"tired",t:"Втомлено"},{k:"anx",t:"Тривожно"},{k:"scared",t:"Страшно"},{k:"sad",t:"Сумно"},{k:"hurt",t:"Боляче"},{k:"cry",t:"Хочу плакати"},{k:"irr",t:"Все дратує"},{k:"empty",t:"Пусто"}];
 const COLORS=[{k:"red",c:"#d9584a",t:"Червоний"},{k:"yellow",c:"#e8c448",t:"Жовтий"},{k:"blue",c:"#5a96e6",t:"Синій"},{k:"green",c:"#64be78",t:"Зелений"},{k:"violet",c:"#aa78e6",t:"Фіолетовий"}];
 // Themes: background image + accent palette. "pattern" images tile instead of stretching.
@@ -146,6 +159,17 @@ const EMO=[
   E("red",3,"panic_attack","Панічна атака","Раптовий напад: серце калатає, бракує повітря, тремтить тіло, здається, що зараз станеться щось страшне. Минає, хоч у моменті так не здається."),
   E("red",3,"meltdown","Мелтдаун","Перевантаження проривається назовні: сльози, крик, неможливість себе зупинити. Це не вибір і не маніпуляція, а нервова система, якій забагато."),
   E("red",3,"rage","Лють","Злість настільки сильна, що важко її втримати."),
+  // Складніші, змішані відчуття.
+  E("red",1,"mixed","Змішані почуття","Всередині кілька відчуттів одночасно, і вони тягнуть у різні боки. Це нормально, не треба обирати одне «правильне»."),
+  E("red",1,"pressured","Тиск очікувань","Здається, що від тебе чекають більше, ніж можеш дати, навіть якщо ніхто прямо не каже."),
+  E("red",2,"dread","Тривожне очікування","Чекаєш звістки чи події, і ніщо інше не тримається в голові. Час тягнеться."),
+  E("red",2,"worry_close","Страх за близьку людину","Думки весь час повертаються до того, чи все з нею гаразд. Тривога не за себе, а за когось."),
+  E("red",2,"self_anger","Злість на себе","Злишся не на когось, а на себе: «знову не встиг(ла)», «що зі мною не так». Ця злість часто про втому, а не про тебе."),
+  E("red",2,"inner_conflict","Внутрішній конфлікт","Одна частина хоче одного, інша протилежного. Важко вирішити, бо обидві мають рацію."),
+  E("red",2,"cornered","Загнаність у кут","Здається, що виходу немає і всі варіанти погані. Хочеться або тікати, або відбиватися."),
+  E("red",3,"humiliated","Приниженість","Ніби тебе зробили меншим(ою) на очах в інших. Дуже пече всередині."),
+  E("red",3,"helpless_rage","Безсила злість","Злість на те, що не можеш змінити: війну, обставини, чужі рішення. Нікуди її подіти."),
+  E("red",3,"hypervigilant","Постійно насторожі","Тіло весь час чекає небезпеки: здригаєшся від звуків, не можеш розслабитись навіть у безпеці."),
 
   E("yellow",1,"curious","Цікавість","Хочеться дізнатися, спробувати, розібратись."),
   E("yellow",1,"cheerful","Бадьорість","Є сили і легкість рухатися."),
@@ -164,6 +188,10 @@ const EMO=[
   E("yellow",3,"hyperfocus","Гіперфокус","Неможливо відірватися, світ навколо зник. Приємно, але легко забути про їжу, воду й сон."),
   E("yellow",3,"excited","Захват","Дуже радісно, аж переповнює."),
   E("yellow",3,"euphoric","Ейфорія","Пік радості, все здається можливим."),
+  E("yellow",1,"nervous_excite","Хвилююче очікування","І радісно, і трохи страшно водночас: як перед зустріччю чи чимось новим."),
+  E("yellow",2,"brave","Сміливість","Страшно, але робиш. Відчуття, що можеш більше, ніж думалось."),
+  E("yellow",2,"relief_joy","Радість-полегшення","Людина нарешті вийшла на звʼязок, щось нарешті вирішилось. Тіло видихає, і стає легко."),
+  E("yellow",3,"wired","Перезбудження","Енергії забагато, думки скачуть, не заснути. Буває після стресу чи на розгоні, і за ним часто приходить спад."),
 
   E("blue",1,"bored","Нудьга","Нічого не чіпляє, час тягнеться."),
   E("blue",1,"confused","Розгубленість","Незрозуміло, що робити і що відчуваєш."),
@@ -190,6 +218,18 @@ const EMO=[
   E("blue",3,"hopeless","Безнадія","Не видно виходу і сенсу намагатися."),
   E("blue",3,"depressed","Пригніченість","Важко, темно, ніби так буде завжди. Якщо триває тижнями, варто поговорити з фахівцем."),
   E("blue",3,"despair","Відчай","Нестерпно, і здається, що нічого не допоможе."),
+  E("blue",1,"unseen","Непоміченість","Здається, що твоїх зусиль чи стану ніхто не бачить. Хочеться, щоб помітили без пояснень."),
+  E("blue",1,"rest_guilt","Провина за відпочинок","Лежиш, а всередині голос «треба щось робити». Відпочинок не відчувається заслуженим, хоч він потрібен."),
+  E("blue",2,"alienated","Відчуження","Навіть серед людей ніби за склом, наче ти не з ними."),
+  E("blue",2,"unwanted","Непотрібність","Здається, що без тебе обійдуться, що ти тягар. Це відчуття часто бреше, особливо коли сил мало."),
+  E("blue",2,"masking_tired","Втома від маскування","Довго вдаєш, що все ок, підлаштовуєшся під інших. Тепер сил бути «нормальним(ою)» немає."),
+  E("blue",2,"compassion_tired","Втома від співчуття","Так довго тримаєш інших, що на співчуття вже не лишилось сил. Це не черствість, це виснаження."),
+  E("blue",2,"state_shame","Сором за свій стан","Соромно, що не справляєшся, що «знову» погано. Хоча стан не вибирають."),
+  E("blue",2,"missing_self","Туга за собою колишнім(ьою)","Сумуєш за тим, ким був(ла), коли було більше сил, бажань, легкості. Це теж горе."),
+  E("blue",3,"rejected","Біль відкидання","Відмова, ігнор чи критика ранять дуже сильно, сильніше, ніж «мало б». У нейровідмінних людей це часта і справжня реакція."),
+  E("blue",3,"abandoned","Покинутість","Відчуття, що з усім доводиться бути наодинці. Може зʼявлятись, навіть коли насправді не покинули, просто людини немає поруч."),
+  E("blue",3,"unreal","Нереальність","Ніби світ або ти сам(а) несправжні, як уві сні. Так психіка іноді відгороджується від перевантаження. Минає."),
+  E("blue",3,"crushed","Розчавленість","Ніби на тебе впало все одразу і не встати. Сил немає навіть на сльози."),
 
   E("green",1,"calm","Спокій","Нічого не тисне, можна просто бути."),
   E("green",1,"relaxed","Розслабленість","Тіло відпускає напругу."),
@@ -209,6 +249,11 @@ const EMO=[
   E("green",3,"fulfilled","Наповненість","Ніби всього досить, усередині повно."),
   E("green",3,"serene","Умиротворення","Глибокий тихий спокій."),
   E("green",3,"blissful","Блаженство","Дуже добре, тихо і повно водночас."),
+  E("green",1,"bittersweet","Світлий сум","Сумно, але тепло: за чимось хорошим, що було або чого чекаєш."),
+  E("green",1,"self_kind","Мʼякість до себе","Вдається не сварити себе, а поставитись як до близької людини."),
+  E("green",2,"acceptance","Прийняття","Не все так, як хотілось, але можна з цим бути і не боротися."),
+  E("green",2,"letting_go","Відпускання","Перестаєш тримати те, що не залежить від тебе. Стає трохи легше дихати."),
+  E("green",2,"supported","Підтримка","Відчуваєш, що є на кого спертися, навіть якщо людина далеко."),
 ];
 // "Нервова система": long states stay until removed; episodes are moments with a recovery tail ("післясмак").
 const NS_LONG=[
@@ -217,7 +262,20 @@ const NS_LONG=[
   {k:"depressive",t:"Депресивний період",tip:"Навіть прості речі даються важко. Не «збирайся», а маленька турбота: нагадати поїсти, побути поряд. Якщо довго, мʼяко про фахівця."},
   {k:"anxious",t:"Тривожний період",tip:"Тривога тримається фоном. Допомагає передбачуваність: кажи, коли зможеш вийти на звʼязок."},
   {k:"overload",t:"Хронічне перевантаження",tip:"Подразників і справ давно забагато. Менше нового й несподіваного, більше тиші."},
+  {k:"hypervigil",t:"Постійна напруга, насторожі",tip:"Тіло давно в режимі небезпеки. Допомагає передбачуваність: попереджай про зміни, без різких новин і несподіванок."},
+  {k:"numb",t:"Емоційне оніміння",tip:"Почуття ніби вимкнені. Це захист психіки від перевантаження, а не байдужість до тебе."},
+  {k:"exec",t:"Важко почати будь-які справи",tip:"Це не лінь: мозок не може запустити дію. Допомагає побути на звʼязку, поки робиться, або назвати один крихітний крок."},
+  {k:"insomnia",t:"Тривалі проблеми зі сном",tip:"Давно не висипається, тому все дається важче. Бережи сон: без пізніх дзвінків без домовленості."},
+  {k:"irritable",t:"Дратівливий період",tip:"Дратує майже все, і це від виснаження. Не сприймай на свій рахунок, менше нових прохань."},
+  {k:"load",t:"Все тримається на мені",tip:"Давно все тримається на цій людині: побут, робота, рішення. Візьми на себе хоч одне рішення чи справу, якщо можеш."},
+  {k:"uncertainty",t:"Тривала невизначеність",tip:"Невідомість виснажує. Допомагає щось стабільне: дзвінок у той самий час, звичні маленькі ритуали."},
+  {k:"grief",t:"Період горя чи втрати",tip:"Горе не має строку. Не треба втішати чи підганяти, достатньо бути поряд і дозволяти сумувати."},
+  {k:"pain",t:"Тривалий біль або хвороба",tip:"Тіло давно болить, і це забирає сили на все інше. Менше очікувань, більше практичної допомоги."},
 ];
+// How long a state has lasted, in plain words.
+function durText(since){const d=Math.max(0,Math.floor((Date.now()-since)/864e5));
+  if(d<1)return "від сьогодні";if(d<14)return d+" дн.";if(d<60)return Math.round(d/7)+" тиж.";const m=Math.round(d/30.4);return m<24?m+" міс.":Math.floor(m/12)+" р."}
+const dlong=ts=>new Date(ts).toLocaleDateString("uk-UA",{day:"numeric",month:"short",year:new Date(ts).getFullYear()===new Date().getFullYear()?undefined:"numeric"});
 const NS_EP=[
   {k:"shutdown",t:"Шатдаун",h:24,now:"Може не говорити й не відповідати. Не тисни: одне тепле повідомлення, яке не потребує відповіді.",
     after:"Після шатдауну нервова система ще виснажена: тихо, без рішень і розборів."},
@@ -254,7 +312,7 @@ const PLAN_KIND={game:{i:"🎮",t:"Гра"},watch:{i:"🎬",t:"Перегляд"
 // State history within a day: what each field reads like, for the log on the cards and in pushes.
 const FNAME={energy:"сили",need:"треба",sleep:"сон",head:"голова",mood:"настрій",emo:"відчуття",why:"причина"};
 const POS_MOOD=["calm","happy","joy","cope"],NEG_MOOD=["tired","anx","scared","sad","hurt","cry","irr","empty"];
-const HEAD_SEV={ok:0,pain:1,prodrome:2,migraine:3};
+const HEAD_SEV={ok:0,pain:1,postdrome:1,prodrome:2,migraine:3};
 
 /* ---------- helpers ---------- */
 const arr=v=>Array.isArray(v)?v:(v?[v]:[]);
@@ -312,7 +370,7 @@ const NOTABLE=["need","sleep","head","energy","mood","whys","emo","unsure"];
 function fieldText(k,d){
   if(k==="energy")return ELBL[d.energy]||"";
   if(k==="need")return d.need==="own"?(d.needText||""):((find(NEED,d.need)||{}).t||"").toLowerCase();
-  if(k==="sleep")return labels(SLEEP,d.sleep).join(", ").toLowerCase();
+  if(k==="sleep")return [...labels(SLEEP,d.sleep),...labels(SLEEP_H,d.sleepH)].join(", ").toLowerCase();
   if(k==="head"){const h=find(HEAD,d.head);return h?h.t.toLowerCase()+((d.head==="pain"||d.head==="migraine")&&d.pain?" "+d.pain+"/10":""):""}
   if(k==="mood")return labels(MOOD,d.mood).join(", ").toLowerCase();
   if(k==="emo")return [...(d.unsure?["не розумію свій стан"]:[]),...arr(d.emo).map(x=>(emoOf(x)||{}).t).filter(Boolean).map(t=>t.toLowerCase())].join(", ");
@@ -347,7 +405,7 @@ function dirOf(a,b){
 const snap=d=>({energy:d.energy||0,head:d.head||null,pain:d.pain||0,mood:arr(d.mood),emo:arr(d.emo),unsure:!!d.unsure});
 // A hard moment: show "Обійняти" on the partner's card.
 function hardNow(d){
-  return d.energy===1||d.head==="migraine"||d.head==="prodrome"||(d.pain||0)>=6||has(d.sleep,"nightmares")||d.unsure
+  return d.energy===1||d.need==="help"||d.head==="migraine"||d.head==="prodrome"||(d.pain||0)>=6||has(d.sleep,"nightmares")||d.unsure
     ||arr(d.mood).some(x=>NEG_MOOD.includes(x)&&x!=="tired")||arr(d.emo).some(x=>/red|blue/.test((emoOf(x)||{}).q));
 }
 const notifyState=debounce(async()=>{
@@ -558,16 +616,22 @@ const toggleTask=t=>v=>putPriv(t.id,{kind:"task",text:t.text,w:t.w,created:t.cre
 function stateRows(d){
   const rows=[];
   if(d.energy)rows.push({f:"energy",label:"Сили: "+ELBL[d.energy],alert:d.energy===1,tips:d.energy===1?["Сил майже немає. Не чекай розгорнутих відповідей."]:[]});
-  const sl=labels(SLEEP,d.sleep);
-  if(sl.length)rows.push({f:"sleep",label:"Сон: "+sl.join(", ").toLowerCase(),alert:has(d.sleep,"nightmares")||has(d.sleep,"dreams"),
-    tips:has(d.sleep,"nightmares")?["Не розпитуй про кошмари, просто будь поруч у повідомленнях."]:has(d.sleep,"dreams")?["Сни виснажують навіть без кошмарів. Будь мʼякшим сьогодні."]:[]});
+  const sl=fieldText("sleep",d);
+  if(sl){const t=[];
+    if(has(d.sleep,"nightmares"))t.push("Не розпитуй про кошмари, просто будь поруч у повідомленнях.");
+    else if(has(d.sleep,"dreams"))t.push("Сни виснажують навіть без кошмарів. Будь мʼякшим сьогодні.");
+    if(has(d.sleep,"alarms"))t.push("Ніч з тривогами: тіло не відпочило, навіть якщо спало. Мʼякше й повільніше сьогодні.");
+    if(has(d.sleep,"insomnia")||d.sleepH==="lt4")t.push("Майже без сну все дається важче й емоції гостріші. Нічого важкого сьогодні, якщо можна.");
+    if(has(d.sleep,"much")||d.sleepH==="gt10")t.push("Багато сну теж буває ознакою виснаження чи спаду. Без жартів про «соню».");
+    rows.push({f:"sleep",label:"Сон: "+sl,alert:["nightmares","dreams","alarms","insomnia"].some(x=>has(d.sleep,x)),tips:t})}
   const h=find(HEAD,d.head);
   if(h){const t=[];
     if(d.head==="prodrome")t.push("Можна нагадати про воду, їжу й ліки, краще текстом.");
     if(d.head==="migraine")t.push("Краще текст, ніж дзвінок, і без поспіху з відповіддю.");
+    if(d.head==="postdrome")t.push("Мігрень минула, але тягнуть втома й туман у голові. Без поспіху і важких розмов.");
     if(d.head==="pain"&&(d.pain||0)>=6)t.push("Коротко й тихо, без дзвінків, якщо не просить.");
     rows.push({f:"head",label:"Голова: "+h.t.toLowerCase()+((d.head==="pain"||d.head==="migraine")&&d.pain?" "+d.pain+"/10":""),alert:!!h.warn||(d.pain||0)>=6,tips:t});
-    const sg=labels(SIGNS,d.signs);if(sg.length&&(d.head==="prodrome"||d.head==="migraine"))rows.push({f:"head",label:sg.join(", ").toLowerCase(),alert:true,tips:[]});
+    const sg=labels(SIGNS,d.signs);if(sg.length&&(d.head==="prodrome"||d.head==="migraine"||d.head==="postdrome"))rows.push({f:"head",label:sg.join(", ").toLowerCase(),alert:true,tips:[]});
   }
   const ml=labels(MOOD,d.mood);
   if(ml.length){const t=[];
@@ -583,9 +647,13 @@ function stateRows(d){
     const qs=[...new Set(em.map(e=>e.q))];
     const t=qs.map(q=>EMO_Q[q].tip);
     if(d.unsure)t.unshift("Сам(а) не розуміє, що відчуває. Не питай «що сталося», краще запропонуй побути поряд або обійми.");
-    if(em.some(e=>["shutdown","overstimulated","overwhelmed"].includes(e.k)))t.push("Перевантаження: менше слів і звуків, текст замість дзвінка, не чекай відповіді.");
+    if(em.some(e=>["shutdown","overstimulated","overwhelmed","masking_tired"].includes(e.k)))t.push("Перевантаження: менше слів і звуків, текст замість дзвінка, не чекай відповіді.");
     if(em.some(e=>e.k==="longing"||e.k==="lonely"))t.push("Бракує тебе. Голосове, фото чи «я тут» зараз важать більше, ніж здається.");
-    if(em.some(e=>["depressed","empty","hopeless","despair","burnout"].includes(e.k)))t.push("Якщо так уже кілька днів, мʼяко запропонуй поговорити з фахівцем. Без тиску.");
+    if(em.some(e=>e.k==="worry_close"||e.k==="dread"))t.push("Хвилюється, чекає звістки. Навіть коротке «я на звʼязку, все ок» знімає багато напруги.");
+    if(em.some(e=>["rejected","unwanted","abandoned","unseen"].includes(e.k)))t.push("Зараз важливо почути прямо, без натяків: «ти мені потрібна(ий), я бачу, як ти стараєшся».");
+    if(em.some(e=>e.k==="rest_guilt"||e.k==="state_shame"||e.k==="self_anger"))t.push("Сварить себе. Скажи, що відпочивати й не справлятися можна, і що ти не чекаєш більшого.");
+    if(em.some(e=>e.k==="hypervigilant"||e.k==="unreal"))t.push("Нервова система на межі. Спокійно, передбачувано, без різких новин і несподіванок.");
+    if(em.some(e=>["depressed","empty","hopeless","despair","burnout","crushed"].includes(e.k)))t.push("Якщо так уже кілька днів, мʼяко запропонуй поговорити з фахівцем. Без тиску.");
     rows.push({f:"emo",label:"Відчуття: "+fieldText("emo",d),alert:qs.some(q=>q==="red"||q==="blue")||!!d.unsure,tips:t,emo:em});
   }
   const cr=cycleRow(d.cycle);if(cr)rows.push(cr);
@@ -598,7 +666,7 @@ function nsBlock(id,isMe){
   if(!ns.long.length&&!eps.length)return out;
   const box=el("div","nsblock");
   ns.long.forEach(l=>{const info=find(NS_LONG,l.k);const r=el("div","nsrow");
-    r.append(el("span","fact alert",longLabel(l)+(l.since?" · з "+dshort(l.since):"")));
+    r.append(el("span","fact alert",longLabel(l)+(l.since?" · з "+dlong(l.since)+" ("+durText(l.since)+")":"")));
     if(!isMe&&info)r.append(el("p","tip",info.tip));box.append(r)});
   eps.forEach(e=>{const info=epInfo(e.k),ph=epPhase(e);const r=el("div","nsrow");
     r.append(el("span","fact alert ep","⚡ "+info.t+" о "+(new Date(e.ts).toDateString()===new Date().toDateString()?"":dshort(e.ts)+" ")+hm(e.ts)+(ph==="after"?" · відновлення "+untilText(e,id):"")));
@@ -629,7 +697,7 @@ function personCard(id,d,isMe){
   c.append(...nsBlock(id,isMe));
   if(!d||!isToday){c.append(el("p","empty",isMe?"Відміть свій стан у вкладці «Стан», і він зʼявиться тут для вас обох.":"Сьогодні стан ще не відмічено."));if(!isMe)c.append(nudgeRow(id),watchRow(id));return c}
   const n=d.need==="own"&&d.needText?{t:d.needText,o:d.needText}:find(NEED,d.need);
-  if(n){const nb=el("div","need"+(fresh.has("need")?" fresh":""),isMe?n.t:n.o);c.append(nb);if(!isMe&&n.tip)c.append(el("p","tip",n.tip))}
+  if(n){const nb=el("div","need"+(n.warn?" urgent":"")+(fresh.has("need")?" fresh":""),isMe?n.t:n.o);c.append(nb);if(!isMe&&n.tip)c.append(el("p","tip",n.tip))}
   const ws=whysOf(d);
   if(ws.length){const q=el("ul","whys");ws.forEach(w=>{const li=el("li","why"+(w.ts>seen?" fresh":""),"«"+w.text+"»");if(w.ts)li.append(el("small",null," "+hm(w.ts)));q.append(li)});c.append(q)}
   let chips=null;
@@ -852,8 +920,9 @@ function renderState(d){
   const lvl=d.energy||0;
   document.querySelectorAll(".lvl").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.l===lvl)));
   statusRow();emoMap(d);nsRow();retroRow();
-  needRow(d);multiRow($("sleepChips"),SLEEP,"sleep",["good"]);chipRow($("headChips"),HEAD,"head");multiRow($("moodChips"),MOOD,"mood");
-  const showPain=d.head==="pain"||d.head==="migraine",showSigns=d.head==="prodrome"||d.head==="migraine";
+  needRow(d);helpRow(d);multiRow($("sleepChips"),SLEEP,"sleep",["good"]);chipRow($("sleepHChips"),SLEEP_H,"sleepH");chipRow($("headChips"),HEAD,"head");multiRow($("moodChips"),MOOD,"mood");
+  $("feelHint").textContent=FEEL_HINT[Math.floor(Date.now()/864e5)%FEEL_HINT.length];
+  const showPain=d.head==="pain"||d.head==="migraine",showSigns=d.head==="prodrome"||d.head==="migraine"||d.head==="postdrome";
   $("painBox").hidden=!showPain;if(showPain)scaleRow($("painChips"),"pain");
   $("signBox").hidden=!showSigns;if(showSigns)multiRow($("signChips"),SIGNS,"signs");
   const wl=$("whyList");wl.replaceChildren();
@@ -873,9 +942,9 @@ async function setNs(next){
   const {error}=await sb.from("profiles").update({ns:next}).eq("id",uid);
   if(error)return syncErr(error);saved();pingUpdate();
 }
-function toggleLong(k,text){
+function toggleLong(k,text,since){
   const ns=nsOf(uid),on=ns.long.some(l=>l.k===k&&(k!=="own"||l.text===text));
-  const long=on?ns.long.filter(l=>!(l.k===k&&(k!=="own"||l.text===text))):[...ns.long,{k,text:k==="own"?text:undefined,since:Date.now()}];
+  const long=on?ns.long.filter(l=>!(l.k===k&&(k!=="own"||l.text===text))):[...ns.long,{k,text:k==="own"?text:undefined,since:since||Date.now()}];
   setNs({...ns,long});
   if(!on)sb.functions.invoke("notify",{body:{type:"ns",what:"long",k}}).catch(()=>{});
 }
@@ -892,6 +961,14 @@ function nsRow(){
   NS_LONG.forEach(o=>{const on=ns.long.some(l=>l.k===o.k);const b=btn("chip warn",o.t,()=>toggleLong(o.k));b.setAttribute("aria-pressed",String(on));lb.append(b)});
   ns.long.filter(l=>l.k==="own").forEach(l=>{const b=btn("chip warn",l.text,()=>toggleLong("own",l.text));b.setAttribute("aria-pressed","true");lb.append(b)});
   if($("nsForm").hidden)lb.append(btn("chip add","+ Своє",()=>{$("nsForm").hidden=false;render();$("nsText").focus()}));
+  // Active long states with "since" date: often you notice a state only months after it began.
+  const ll=$("nsLongList");ll.replaceChildren();
+  ns.long.forEach((l,i)=>{const li=el("li","item");const tx=el("div","txt");const inner=el("div",null,longLabel(l));
+    inner.append(el("small",null,l.since?"триває "+durText(l.since)+". Якщо почалось раніше, зміни дату":"коли почалось?"));tx.append(inner);li.append(tx);
+    const inp=el("input");inp.type="date";inp.max=today();if(l.since)inp.value=dkey(new Date(l.since));inp.setAttribute("aria-label","З якого часу: "+longLabel(l));
+    inp.addEventListener("change",()=>{if(!inp.value)return;const t=dparse(inp.value).getTime();const cur=nsOf(uid);
+      setNs({...cur,long:cur.long.map((x,j)=>j===i?Object.assign({},x,{since:Math.min(t,Date.now())}):x)})});
+    li.append(inp,btn("del","×",()=>toggleLong(l.k,l.text),"Зняти «"+longLabel(l)+"»"));ll.append(li)});
   const eb=$("nsEp");eb.replaceChildren();
   NS_EP.forEach(o=>eb.append(btn("chip","⚡ "+o.t,()=>addEpisode(o.k))));
   const al=$("nsActive");al.replaceChildren();
@@ -919,6 +996,74 @@ function nsRow(){
     li.append(btn("del","×",()=>patchEpisode(e.id,{del:1}),"Прибрати, якщо випадково"));
     al.append(li)});
 }
+/* ---------- самоперевірка тривалих станів ---------- */
+// Not a diagnosis: plain statements for the last few weeks, each tied to the long states it hints at.
+// Result suggests states to mark (with "since" from the duration answer). Kept privately in private_items "ns_check".
+const CHECK=[
+  {k:"rest",t:"Відпочинок майже не відновлює: після сну чи вихідних сил не більше",s:["burnout","aut_burnout"]},
+  {k:"cynic",t:"Робота чи обовʼязки, які раніше давались, тепер викликають відразу, цинізм або «мені все одно»",s:["burnout"]},
+  {k:"senses",t:"Звуки, світло, дотики, люди переносяться гірше, ніж раніше",s:["aut_burnout","overload"]},
+  {k:"mask",t:"Важче говорити, підбирати слова, «тримати обличчя» з людьми",s:["aut_burnout"]},
+  {k:"skills",t:"Губляться навички, які раніше були на автоматі: готувати, планувати, дбати про себе",s:["aut_burnout","exec"]},
+  {k:"low",t:"Більшість днів пригнічений настрій, важкість або порожнеча",s:["depressive"]},
+  {k:"joy",t:"Мало що тішить, навіть те, що раніше подобалось",s:["depressive","numb"]},
+  {k:"worry",t:"Тривога чи хвилювання майже весь час фоном, і їх важко зупинити",s:["anxious"]},
+  {k:"tense",t:"Тіло весь час напружене, здригаєшся від звуків, не розслабляєшся навіть у безпеці",s:["hypervigil","anxious"]},
+  {k:"much",t:"Справ, людей і подразників давно більше, ніж можеш перетравити",s:["overload","load"]},
+  {k:"numb",t:"Почуття ніби приглушені або вимкнені",s:["numb","depressive"]},
+  {k:"start",t:"Важко почати навіть прості справи, хоч дуже хочеш",s:["exec","depressive"]},
+  {k:"sleep",t:"Сон давно поганий: важко заснути, прокидаєшся, не висипаєшся",s:["insomnia","anxious"]},
+  {k:"irr",t:"Дратує майже все і всі, терпіння дуже мало",s:["irritable","burnout"]},
+  {k:"loss",t:"Сумуєш за кимось чи чимось втраченим, і це не відпускає",s:["grief"]},
+  {k:"unknown",t:"Невідомість щодо майбутнього чи близьких тисне щодня",s:["uncertainty","anxious"]},
+  {k:"alone",t:"Все тримається на тобі: побут, робота, рішення, і нікому передати",s:["load"]},
+  {k:"pain",t:"Тривалий біль чи хвороба забирають сили",s:["pain"]},
+  {k:"safe",t:"Бувають думки, що краще б тебе не було, або що не хочеться жити",s:[],safety:1},
+];
+const CHECK_ANS=[[0,"Ні"],[1,"Іноді"],[2,"Часто"]];
+const CHECK_SINCE=[[3,"кілька тижнів"],[6,"1–2 місяці"],[17,"3–6 місяців"],[30,"понад пів року"]]; // weeks back
+let chk=null;
+function openCheck(){chk={ans:{},since:null,done:false};renderCheck();$("nsCheckDlg").showModal();$("nsCheckDlg").scrollTop=0}
+function checkResult(){
+  const sc={};
+  CHECK.forEach(q=>q.s.forEach(k=>{sc[k]=sc[k]||{sum:0,max:0,often:0};sc[k].sum+=chk.ans[q.k]||0;sc[k].max+=2;if(chk.ans[q.k]===2)sc[k].often++}));
+  return Object.entries(sc).filter(([,v])=>v.often&&v.sum/v.max>=.5).sort((a,b)=>b[1].sum/b[1].max-a[1].sum/a[1].max).map(([k])=>k);
+}
+function renderCheck(){
+  const b=$("nsCheckBody");b.replaceChildren();
+  $("nsCheckNext").textContent=chk.done?"Пройти ще раз":"Подивитись результат";
+  if(!chk.done){
+    b.append(el("p","hint","Як було останні кілька тижнів? Це не діагноз, а підказка, як назвати те, що з тобою відбувається. Результат бачиш тільки ти."));
+    const last=priv.get("ns_check");
+    if(last&&last.ts)b.append(el("p","hint","Попередня перевірка: "+dlong(last.ts)+(arr(last.res).length?", тоді вийшло: "+arr(last.res).map(k=>(find(NS_LONG,k)||{t:k}).t.toLowerCase()).join(", "):"")+"."));
+    CHECK.forEach(q=>{const r=el("div","chk");r.append(el("p",null,q.t));const ch=el("div","chips");
+      CHECK_ANS.forEach(([v,t])=>{const on=chk.ans[q.k]===v;const c=btn("chip"+(q.safety&&v?" warn":""),t,()=>{chk.ans[q.k]=on?undefined:v;renderCheck()});c.setAttribute("aria-pressed",String(on));ch.append(c)});
+      r.append(ch);b.append(r)});
+    const r=el("div","chk");r.append(el("p",null,"Як давно приблизно так?"));const ch=el("div","chips");
+    CHECK_SINCE.forEach(([w,t])=>{const on=chk.since===w;const c=btn("chip",t,()=>{chk.since=on?null:w;renderCheck()});c.setAttribute("aria-pressed",String(on));ch.append(c)});
+    r.append(ch);b.append(r);
+    return;
+  }
+  const res=checkResult(),ns=nsOf(uid);
+  if(chk.ans.safe){const p=el("p","crisis");
+    p.append(document.createTextNode("Дякую, що чесно відповів(ла). Такі думки бувають від дуже великого виснаження, і з ними не треба бути наодинці. Поговорити можна з Lifeline Ukraine: "));
+    const a=el("a",null,"7333");a.href="tel:7333";p.append(a,document.createTextNode(", цілодобово й безкоштовно. А ще з психологом, лікарем чи близькою людиною. Якщо є пряма небезпека: "));
+    const e=el("a",null,"112");e.href="tel:112";p.append(e,document.createTextNode("."));b.append(p)}
+  if(!res.length)b.append(el("p",null,"Жоден тривалий стан явно не вимальовується. Якщо все одно щось не так, можна додати своїми словами через «+ Своє»."));
+  else b.append(el("p",null,"Схоже, що зараз може бути:"));
+  const weeks=chk.since,since=weeks?Date.now()-weeks*7*864e5:null;
+  res.forEach(k=>{const info=find(NS_LONG,k);const on=ns.long.some(l=>l.k===k);
+    const c=el("div","chkres");c.append(el("h3",null,info.t));
+    c.append(btn(on?"ghost sm":"btn sm",on?"✓ Вже відмічено":"Відмітити"+(since?" з "+dlong(since):""),()=>{if(!nsOf(uid).long.some(l=>l.k===k))toggleLong(k,null,since);setTimeout(renderCheck,50)}));
+    b.append(c)});
+  if(res.some(k=>k==="depressive"||k==="anxious"||k==="numb"||k==="insomnia")||(chk.since&&chk.since>=6&&res.length))
+    b.append(el("p","hint","Якщо так триває довше кількох тижнів, варто поговорити з психологом, психотерапевтом чи сімейним лікарем. Це не слабкість: з депресією, тривогою і безсонням реально працюють, і стає легше."));
+  b.append(el("p","hint","Дату початку завжди можна змінити в блоці «Нервова система»."));
+}
+function finishCheck(){
+  if(chk.done){chk={ans:{},since:null,done:false};renderCheck();$("nsCheckDlg").scrollTop=0;return}
+  chk.done=true;putPriv("ns_check",{kind:"ns_check",ts:Date.now(),ans:chk.ans,since:chk.since,res:checkResult()});renderCheck();$("nsCheckDlg").scrollTop=0;
+}
 function statusRow(){
   const p=myProfile(),box=$("statusChips");box.replaceChildren();
   (STATUS[p.status_set||"civil"]||STATUS.civil).forEach(o=>{const on=p.status===o.k;
@@ -936,7 +1081,10 @@ function emoMap(d){
   const pick=e=>{emoInfo=e.k;const on=sel.includes(e.k);
     if(!on&&sel.length>=EMO_MAX){emoInfo="__max";render();return}
     saveMe({emo:on?sel.filter(x=>x!==e.k):[...sel,e.k]})};
-  const word=e=>{const b=btn("emo-w t"+e.i+" q-"+e.q,e.t,()=>pick(e));b.setAttribute("aria-pressed",String(sel.includes(e.k)));return b};
+  // In "look" mode a tap only shows what the word means; choosing is a separate button under it.
+  const word=e=>{const b=btn("emo-w t"+e.i+" q-"+e.q+(emoLook&&emoInfo===e.k?" peek":""),e.t,()=>{if(emoLook){emoInfo=emoInfo===e.k?null:e.k;render()}else pick(e)});
+    b.setAttribute("aria-pressed",String(sel.includes(e.k)));return b};
+  $("emoLook").setAttribute("aria-pressed",String(emoLook));
   // chosen
   const ch=$("emoChosen");ch.replaceChildren();
   sel.forEach(k=>{const e=emoOf(k);ch.append(btn("emo-w t2 q-"+e.q+" chosen",e.t+" ×",()=>pick(e),"Прибрати «"+e.t+"»"))});
@@ -964,11 +1112,20 @@ function emoMap(d){
   const inf=$("emoInfo");inf.replaceChildren();
   const e=emoInfo==="__max"?null:emoOf(emoInfo)||emoOf(sel[sel.length-1]);
   if(emoInfo==="__max")inf.textContent="Вже вибрано "+EMO_MAX+". Прибери одне, щоб додати інше.";
-  else if(e)inf.append(el("b","q-"+e.q,e.t),document.createTextNode(" — "+e.d));
-  else inf.textContent=emoQ||qtxt?"Торкнись слова, яке хоч трохи схоже. Тут зʼявиться, що воно означає.":"Обери колір: скільки зараз енергії і наскільки приємно. Потім слово.";
+  else if(e){inf.append(el("b","q-"+e.q,e.t),document.createTextNode(" — "+e.d));
+    if(emoLook){const on=sel.includes(e.k);const r=el("span","emoact");r.append(btn("btn sm",on?"Прибрати з мого стану":"Так, це про мене",()=>pick(e)));inf.append(r)}}
+  else inf.textContent=emoLook?"Торкайся слів, щоб прочитати, що вони означають. Нічого не обереться, доки не натиснеш «Так, це про мене».":
+    emoQ||qtxt?"Торкнись слова, яке хоч трохи схоже. Тут зʼявиться, що воно означає.":"Обери колір: скільки зараз енергії і наскільки приємно. Потім слово.";
 }
 let emoQ=null;
-let emoOpen=false,emoInfo=null;
+let emoOpen=false,emoInfo=null,emoLook=false;
+// A small rotating reminder that any feeling is allowed. Changes once a day, not on every render.
+const FEEL_HINT=["Будь-які почуття важливі й нормальні. Вони не «правильні» чи «неправильні», а підказують, що тобі зараз треба.",
+  "Не обовʼязково розуміти, звідки почуття. Достатньо його помітити.",
+  "Сум, злість чи порожнеча не роблять тебе гіршою людиною. Це сигнали, а не вади.",
+  "Можна відчувати кілька протилежних речей одночасно. Так буває.",
+  "Почуття минають, навіть ті, що зараз здаються назавжди.",
+  "Назвати почуття вже трохи його полегшує."];
 // "Що мені зараз треба": built-in options, my own saved ones (synced, private) and "+ Своє".
 const ownNeeds=()=>((priv.get("needs_own")||{}).list)||[];
 function saveOwnNeed(text){putPriv("needs_own",{kind:"needs_own",list:[text,...ownNeeds().filter(x=>x!==text)].slice(0,6)})}
@@ -984,6 +1141,75 @@ function needRow(d){
   });
   if($("needForm").hidden)box.append(btn("chip add","+ Своє",()=>{$("needForm").hidden=false;render();$("needText").focus()}));
 }
+// "Що може трохи допомогти": small things to try on my own, picked by what I marked.
+// Opens by itself when the state looks hard; otherwise it's one tap away.
+const HELP=[
+  {k:"breathe",t:"Видих довший за вдих: вдих на 4, видих на 6. Кнопка нижче подихає разом з тобою.",tags:["anx","all"]},
+  {k:"ground",t:"Заземлитись: назви 5 речей, які бачиш, 4 які чуєш, 3 яких можеш торкнутись.",tags:["anx","unreal"]},
+  {k:"quiet",t:"Менше подразників: навушники чи беруші, приглушене світло, телефон екраном донизу.",tags:["sensory"]},
+  {k:"weight",t:"Загорнутися в плед, покласти щось важке на коліна чи груди. Тиск заспокоює нервову систему.",tags:["sensory","anx","low"]},
+  {k:"stim",t:"Стимінг: гойдатися, мʼяти щось у руках, повторювати рух. Усе, що заспокоює саме тебе, можна.",tags:["sensory","anx"]},
+  {k:"lie",t:"Полежати 10 хвилин без телефону. Не треба нічого вирішувати.",tags:["low","sensory"]},
+  {k:"water",t:"Кілька ковтків води і щось маленьке поїсти. Голодне тіло підсилює будь-які почуття.",tags:["low","all"]},
+  {k:"warm",t:"Щось тепле: чай, душ, грілка. Тепло тілу допомагає і голові.",tags:["low","sad"]},
+  {k:"hand",t:"Покласти руку на груди і сказати собі: «мені зараз важко, і це нормально». Як сказала б близькій людині.",tags:["sad","shame"]},
+  {k:"cut",t:"Зменшити план на сьогодні до одного пункту. Решту можна перенести без провини.",tags:["over","low"]},
+  {k:"write",t:"Написати комусь одне слово чи стікер. Не обовʼязково пояснювати.",tags:["sad","lonely"]},
+  {k:"cry",t:"Якщо хочеться плакати, можна. Сльози знімають напругу, це не слабкість.",tags:["sad"]},
+  {k:"move",t:"Струсити руки, потупотіти ногами, пройтися кімнатою. Злість і тривога живуть у тілі, їм треба вихід.",tags:["anger","anx"]},
+];
+const BLUE_HARD=["hopeless","despair","crushed","depressed"];
+function helpLevel(d){
+  const em=arr(d.emo),eps=activeEpisodes(uid);
+  if(d.need==="help"||em.some(k=>BLUE_HARD.includes(k))||eps.some(e=>epPhase(e)==="now"))return 2;
+  if(hardNow(d)||eps.length||nsOf(uid).long.length&&d.energy&&d.energy<=2)return 1;
+  return 0;
+}
+function helpTags(d){
+  const em=arr(d.emo).map(emoOf).filter(Boolean),m=arr(d.mood),t=new Set(["all"]);
+  const any=(...ks)=>ks.some(k=>em.some(e=>e.k===k)||m.includes(k));
+  if(any("anx","scared","anxious","panic","panic_attack","dread","worry_close","tense","hypervigilant","stressed"))t.add("anx");
+  if(any("overstimulated","overwhelmed","meltdown","shutdown","masking_tired")||activeEpisodes(uid).some(e=>["sensory","meltdown","shutdown"].includes(e.k)))t.add("sensory");
+  if(any("sad","hurt","cry","grief","longing","lonely","empty","hopeless","despair","depressed","rejected","abandoned","unwanted"))t.add("sad");
+  if(any("lonely","longing","abandoned","alienated"))t.add("lonely");
+  if(any("ashamed","guilty","state_shame","rest_guilt","self_anger"))t.add("shame");
+  if(any("irr","angry","rage","frustrated","helpless_rage","cornered"))t.add("anger");
+  if(any("unreal","numb","detached")||d.unsure)t.add("unreal");
+  if(any("overwhelmed","stressed","pressured"))t.add("over");
+  if(d.energy===1||any("tired","drained","burnout","apathy","crushed"))t.add("low");
+  return t;
+}
+let helpOpen=false,breathT=null,breathT0=0;
+function stopBreath(){clearInterval(breathT);breathT=null;breathT0=0;render()}
+function breathStep(){const s=(Date.now()-breathT0)/1000;if(s>=60)return stopBreath();
+  const ph=s%10,l=document.querySelector(".breathl"),b=document.querySelector(".breath");if(!l||!b)return;
+  b.classList.toggle("in",ph<4);l.textContent=ph<4?"Вдих… "+Math.ceil(4-ph):"Видих… "+Math.ceil(10-ph)}
+function helpRow(d){
+  const box=$("helpBox"),lvl=helpLevel(d);box.replaceChildren();
+  const open=lvl>0||helpOpen;
+  if(!open){box.append(btn("link","🌿 Що може трохи допомогти зараз?",()=>{helpOpen=true;render()}));return}
+  const c=el("div","helpcard"+(lvl===2?" hard":""));
+  c.append(el("p","sub small",lvl?"Що може трохи допомогти зараз":"Що може допомогти"));
+  if(lvl)c.append(el("p","hint","Не все одразу і не обовʼязково. Обери одне, що зараз здається посильним."));
+  const tags=helpTags(d);
+  const score=h=>h.tags.filter(x=>tags.has(x)).length*2+(h.tags.includes("all")?1:0);
+  const picks=HELP.map((h,i)=>({h,s:score(h),i})).filter(x=>x.s>0||!lvl).sort((a,b)=>b.s-a.s||a.i-b.i).slice(0,4).map(x=>x.h);
+  const ul=el("ul","helplist");picks.forEach(h=>ul.append(el("li",null,h.t)));c.append(ul);
+  // Breathing together: the circle grows for 4 s on the inhale and shrinks for 6 s on the exhale, for about a minute.
+  // State lives outside the render, so realtime re-renders don't stop it.
+  const br=el("div","breath"+(breathT0?" on":""));const circle=el("div","breathc");circle.append(el("span","breathl",""));
+  const go=btn("ghost sm breathbtn",breathT0?"Зупинити":"🌬 Подихати хвилину",()=>{if(breathT0)stopBreath();else{breathT0=Date.now();breathT=setInterval(breathStep,250);render()}});
+  br.append(circle);c.append(go,br);
+  if(lvl===2){const p=el("p","crisis");
+    p.append(document.createTextNode("Якщо стає зовсім нестерпно або зʼявляються думки, що краще б тебе не було, ти не мусиш бути з цим сам(а). Lifeline Ukraine: "));
+    const a=el("a",null,"7333");a.href="tel:7333";p.append(a,document.createTextNode(", цілодобово й безкоштовно, можна просто поговорити. Якщо є пряма небезпека: "));
+    const e=el("a",null,"112");e.href="tel:112";p.append(e,document.createTextNode("."));
+    c.append(p);
+    if(d.need!=="help")c.append(btn("chip warn","Дати знати: «Мені зараз дуже важко»",()=>saveMe({need:"help",needText:null})));
+  }
+  if(!lvl)c.append(btn("link","Сховати",()=>{helpOpen=false;render()}));
+  box.append(c);
+}
 function renderCare(d){
   const lvl=d.energy||0,care=careToday(),mig=d.head==="migraine";
   const open=tasks().filter(t=>!t.done).sort((a,b)=>a.w-b.w||a.created-b.created);
@@ -992,6 +1218,7 @@ function renderCare(d){
   ESS.filter(e=>essDue(e,d)).forEach(e=>ul.append(essEl(e,d,false)));
   let msg="";
   if(d.head==="prodrome")msg="Схоже, наближається мігрень. Зараз саме час: вода, щось поїсти, менше світла й екранів, ліки за планом лікаря, якщо він є. Важкі задачі сховані.";
+  else if(d.head==="postdrome")msg="Після мігрені ще тягнуть втома й туман: це нормальне «мігренозне похмілля». Вода, їжа, повільно. Важкі задачі почекають.";
   else if(mig)msg="Мігрень. Темно, тихо, вода, ліки, якщо маєш план від лікаря. Задачі сьогодні сховані.";
   else if(lvl){
     msg=MSG[lvl];let picks=[];
@@ -1011,7 +1238,7 @@ function renderCare(d){
   renderMeds();
   careList.forEach(c=>cu.append(checkEl("care_"+c.k,c.t,!!care[c.k],v=>setCare(c.k,v),null,c.own?()=>delPriv(c.k):null)));
 
-  const maxW=mig&&!showAll?0:d.head==="prodrome"&&!showAll?1:(!lvl||showAll)?3:lvl<=2?1:3;
+  const maxW=mig&&!showAll?0:(d.head==="prodrome"||d.head==="postdrome")&&!showAll?1:(!lvl||showAll)?3:lvl<=2?1:3;
   const visible=open.filter(t=>t.w<=maxW),hidden=open.length-visible.length;
   const tu=$("tasks");tu.replaceChildren();
   visible.forEach(t=>tu.append(checkEl("t_"+t.id,t.text,false,toggleTask(t),t.w,()=>delPriv(t.id))));
@@ -1124,7 +1351,8 @@ function autoFactors(e,id){
   const d0=new Date(e.ts),d1=new Date(e.ts-864e5);
   [dkey(d0),dkey(d1)].forEach(k=>{
     const h=(id===uid&&k===today())?myToday():dm.get(k);if(!h)return;
-    if(["little","bad","woke","nightmares"].some(x=>has(h.sleep,x)))out.add("sleep");
+    if(SLEEP_BAD.some(x=>has(h.sleep,x))||h.sleepH==="lt4")out.add("sleep");
+    if(has(h.sleep,"alarms"))out.add("alarms");
     if(h.head==="migraine"||h.head==="prodrome"||(h.pain||0)>=5)out.add("pain");
     if(arr(h.emo).some(x=>x==="overstimulated"))out.add("noise");
     if(arr(h.emo).some(x=>x==="lonely"||x==="longing"))out.add("lonely");
@@ -1252,10 +1480,24 @@ function renderPatterns(){
 const FLOW=[{k:"none",t:"Немає"},{k:"spot",t:"Мазня"},{k:"light",t:"Слабкі"},{k:"medium",t:"Середні"},{k:"heavy",t:"Рясні"}];
 const CPAIN=[{k:0,t:"Немає"},{k:1,t:"Легкий"},{k:2,t:"Сильний"},{k:3,t:"Дуже сильний"}];
 const LIBIDO=[{k:"low",t:"Нижче звичного"},{k:"normal",t:"Як завжди"},{k:"high",t:"Вище"},{k:"sky",t:"До небес 🔥"}];
-const CSYM=[{k:"fatigue",t:"Втома"},{k:"dizzy",t:"Запаморочення"},{k:"breath",t:"Задишка"},{k:"cold",t:"Холодні руки й ноги"},
-  {k:"sweet",t:"Тяга до солодкого"},{k:"ice",t:"Тяга до льоду чи крейди"},{k:"bloat",t:"Здуття"},{k:"headache",t:"Головний біль"},
-  {k:"breasts",t:"Чутливі груди"},{k:"skin",t:"Висипання"},{k:"tearful",t:"Плаксивість"},{k:"irritable",t:"Дратівливість"},
-  {k:"anxious",t:"Тривожність"},{k:"insomnia",t:"Погано спиться"}];
+// ph = when it typically shows up (for grouping only; any symptom can be marked any day). Keys are stored, never rename.
+const CPH=[["period","Під час місячних"],["after","Після місячних"],["mid","Середина циклу, овуляція"],["pre","Перед місячними, ПМС"],["any","Будь-коли"]];
+const CSYM=[
+  {k:"cramps",t:"Спазми внизу живота",ph:"period"},{k:"back",t:"Біль у попереку",ph:"period"},{k:"gut",t:"Розлад травлення",ph:"period"},
+  {k:"heavylegs",t:"Важкість у ногах",ph:"period"},{k:"cozy",t:"Хочеться тепла й тиші",ph:"period"},{k:"dizzy",t:"Запаморочення",ph:"period"},
+  {k:"energy_up",t:"Більше енергії",ph:"after"},{k:"clear",t:"Ясна голова",ph:"after"},{k:"social",t:"Хочеться спілкуватися",ph:"after"},
+  {k:"plans",t:"Хочеться нового, планів",ph:"after"},{k:"skin_ok",t:"Шкіра краща",ph:"after"},
+  {k:"ovpain",t:"Біль збоку внизу живота",ph:"mid"},{k:"discharge",t:"Прозорі тягучі виділення",ph:"mid"},{k:"attractive",t:"Відчуваю себе привабливою",ph:"mid"},
+  {k:"smells",t:"Гостріше відчуваю запахи",ph:"mid"},
+  {k:"sweet",t:"Тяга до солодкого",ph:"pre"},{k:"hungry",t:"Постійно голодна",ph:"pre"},{k:"bloat",t:"Здуття",ph:"pre"},{k:"swelling",t:"Набряки",ph:"pre"},
+  {k:"breasts",t:"Чутливі груди",ph:"pre"},{k:"skin",t:"Висипання",ph:"pre"},{k:"headache",t:"Головний біль",ph:"pre"},{k:"migraine",t:"Мігрень",ph:"pre"},
+  {k:"lowmood",t:"Спад настрою",ph:"pre"},{k:"tearful",t:"Плаксивість",ph:"pre"},{k:"irritable",t:"Дратівливість",ph:"pre"},{k:"anxious",t:"Тривожність",ph:"pre"},
+  {k:"personal",t:"Все сприймаю близько до серця",ph:"pre"},{k:"sensory",t:"Звуки й дотики дратують сильніше",ph:"pre"},{k:"fog",t:"Туман у голові",ph:"pre"},
+  {k:"insomnia",t:"Погано спиться",ph:"pre"},{k:"aches",t:"Ломота в тілі",ph:"pre"},
+  {k:"fatigue",t:"Втома",ph:"any"},{k:"breath",t:"Задишка",ph:"any"},{k:"cold",t:"Холодні руки й ноги",ph:"any"},{k:"ice",t:"Тяга до льоду чи крейди",ph:"any"}];
+// Rough phase for today, only to put the likely group first. Ovulation ~14 days before the next period.
+function cycPhase(now){if(!now)return null;if(now.period)return "period";const ov=now.len-14;
+  return Math.abs(now.day-ov)<=2?"mid":now.day<ov?"after":"pre"}
 const CSHARE=[["day","День циклу і місячні"],["forecast","Сповіщення, що місячні скоро"],["flow","Рясність і згустки"],["pain","Біль"],["libido","Лібідо"],["sym","Самопочуття: втома, запаморочення та інше"]];
 const BLEED=["light","medium","heavy"];
 const cycCfg=()=>Object.assign({kind:"cycle",enabled:false,starts:[],share:{day:true,forecast:true,flow:true,pain:true,libido:true,sym:true}},priv.get("cycle")||{});
@@ -1333,6 +1575,8 @@ function cycleRow(c){
   if(c.period||c.flow==="heavy"||c.clots)tips.push("Ці дні фізично важкі: крововтрата і анемія забирають сили. Тепло, вода, без очікувань активності.");
   if((c.pain||0)>=2)tips.push("Сильний біль: менше питань, більше турботи. Грілка, тиша, спитай, чи потрібні ліки.");
   if(arr(c.sym).some(k=>k==="dizzy"||k==="breath"))tips.push("Паморочиться чи бракує повітря: це може бути анемія. Нагадай присісти, попити води й поїсти.");
+  if(arr(c.sym).some(k=>["lowmood","tearful","irritable","personal","anxious","sensory"].includes(k)))tips.push("Перед місячними настрій і чутливість хитаються: це гормони, а не ти і не стосунки. Більше тепла, менше важких розмов.");
+  if(arr(c.sym).some(k=>k==="cramps"||k==="back"))tips.push("Спазми чи біль у попереку: грілка, тиша, спитай, чи щось принести.");
   if(c.libido==="high"||c.libido==="sky")tips.push("Хочеться близькості 🔥 Навіть на відстані: голосове, дзвінок, теплі слова.");
   return {f:"cycle",label:"🩸 "+bits.join(", "),alert:!!(c.period||c.soon!=null||(c.pain||0)>=2),tips};
 }
@@ -1354,7 +1598,10 @@ function renderCycle(){
   const cl=btn("chip warn","Згустки",()=>putCycDay({clots:!d.clots}));cl.setAttribute("aria-pressed",String(!!d.clots));$("cycFlow").append(cl);
   one("cycPain",CPAIN,"pain");one("cycLibido",LIBIDO,"libido");
   const sb_=$("cycSym");sb_.replaceChildren();
-  CSYM.forEach(o=>{const on=arr(d.sym).includes(o.k);const c=btn("chip",o.t,()=>putCycDay({sym:on?arr(d.sym).filter(x=>x!==o.k):[...arr(d.sym),o.k]}));c.setAttribute("aria-pressed",String(on));sb_.append(c)});
+  const ph=cycPhase(now),order=[...CPH].sort((a,b)=>(b[0]===ph)-(a[0]===ph));
+  order.forEach(([pk,pt])=>{const g=el("div","cycgroup"+(pk===ph?" now":""));g.append(el("p","sub small",pt));const row=el("div","chips");
+    CSYM.filter(o=>o.ph===pk).forEach(o=>{const on=arr(d.sym).includes(o.k);const c=btn("chip",o.t,()=>putCycDay({sym:on?arr(d.sym).filter(x=>x!==o.k):[...arr(d.sym),o.k]}));c.setAttribute("aria-pressed",String(on));row.append(c)});
+    g.append(row);sb_.append(g)});
   const hist=$("cycStarts");hist.replaceChildren();
   const st=cycStarts().slice().reverse();
   st.forEach((s,i)=>{const li=el("li","item");const prev=st[i+1];
@@ -1378,6 +1625,7 @@ function renderMeds(){
     if(due)li.classList.add("due");ul.append(li);
   });
   if(!medsList().length)ul.append(el("p","empty","Додай назву й час, і в цей час прийде нагадування. Кожен час окремо: залізо 9:00, залізо 21:00."));
+  $("medsSec").classList.toggle("top",medsList().length>0); // when there are meds, they go first in «Турбота»
   $("medHint").hidden=!medsList().some(m=>/залізо|желез|iron|fer/i.test(m.name));
 }
 
@@ -1573,6 +1821,7 @@ $("statusForm").addEventListener("submit",e=>{e.preventDefault();const t=$("stat
 $("statusCancel").addEventListener("click",()=>{$("statusText").value="";$("statusForm").hidden=true;render()});
 $("unsureBtn").addEventListener("click",()=>{const on=!myToday().unsure;emoOpen=on;saveMe({unsure:on})});
 $("emoSearch").addEventListener("input",()=>render());
+$("emoLook").addEventListener("click",()=>{emoLook=!emoLook;emoInfo=null;render()});
 $("emoToggle").addEventListener("click",()=>{emoOpen=!emoOpen||!!myToday().unsure;render()});
 $("planForm").addEventListener("submit",async e=>{
   e.preventDefault();const title=$("planText").value.trim(),cid=myProfile().couple_id;if(!title||!cid)return;
@@ -1612,6 +1861,9 @@ $("cycAdd").addEventListener("submit",e=>{e.preventDefault();const v=$("cycDate"
 $("medForm").addEventListener("submit",e=>{e.preventDefault();const name=$("medName").value.trim(),time=$("medTime").value;if(!name||!time)return;
   putPriv("meds",{kind:"meds",list:[...medsList(),{id:"m"+Date.now().toString(36),name,time}]});$("medName").value="";flash(e.submitter,"✓ Додано")});
 $("retroSave").addEventListener("click",saveRetro);
+$("nsCheckBtn").addEventListener("click",openCheck);
+$("nsCheckNext").addEventListener("click",finishCheck);
+$("nsCheckClose").addEventListener("click",()=>{$("nsCheckDlg").close();chk=null});
 $("retroCancel").addEventListener("click",()=>{$("retroDlg").close();retroDraft=null});
 $("photoClose").addEventListener("click",()=>$("photoView").close());
 $("careForm").addEventListener("submit",e=>{e.preventDefault();const text=$("careText").value.trim();if(!text)return;

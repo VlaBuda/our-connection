@@ -1,5 +1,5 @@
 // Service worker: offline shell + push notifications.
-const CACHE = "zapas-v22";
+const CACHE = "zapas-v23";
 const SHELL = ["./", "index.html", "styles.css", "app.js", "config.js", "bg.jpg", "manifest.webmanifest", "icons/icon-192.png"];
 
 self.addEventListener("install", (e) => {

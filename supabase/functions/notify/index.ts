@@ -237,6 +237,10 @@ const NEED_TEXT: Record<string, string> = {
   know: "просить просто знати, без питань",
   alone: "хоче трохи побути наодинці. Це не про тебе",
   together: "хоче побути разом",
+  listen: "хоче виговоритись, без порад",
+  distract: "просить відволікти",
+  reassure: "потребує почути, що все буде добре",
+  help: "зараз дуже важко. Напиши або подзвони, щойно зможеш",
 };
 
 function stateLines(d: Record<string, unknown>) {
@@ -244,13 +248,16 @@ function stateLines(d: Record<string, unknown>) {
   if (d.need === "own" && d.needText) lines.push(`просить: «${String(d.needText).slice(0, 120)}»`);
   else if (d.need && NEED_TEXT[d.need as string]) lines.push(NEED_TEXT[d.need as string]);
   if (has(d.sleep, "nightmares")) lines.push("були кошмари");
+  if (has(d.sleep, "alarms")) lines.push("ніч з тривогами");
   if (d.head === "migraine") lines.push("мігрень");
+  else if (d.head === "postdrome") lines.push("відходить після мігрені");
   else if (d.head === "prodrome") lines.push("наближається мігрень");
   if (d.energy === 1) lines.push("сил майже немає");
   if (d.unsure) lines.push("не розуміє свій стан");
   const heavy: Record<string, string> = {
     panic: "паніка", rage: "лють", shutdown: "шатдаун", meltdown: "мелтдаун", panic_attack: "панічна атака", depressed: "пригніченість", empty: "порожнеча",
     apathy: "апатія", hopeless: "безнадія", despair: "відчай", grief: "горе", burnout: "вигорання",
+    crushed: "розчавленість", abandoned: "покинутість", unreal: "нереальність", hypervigilant: "постійно насторожі",
   };
   for (const k of Object.keys(heavy)) if (has(d.emo, k)) lines.push(heavy[k]);
   if (has(d.mood, "cry")) lines.push("хочеться плакати");
@@ -330,7 +337,10 @@ Deno.serve(async (req) => {
     // "Нервова система": a long state was set or an episode happened. Words match NS_LONG / NS_EP in app.js.
     const LONG: Record<string, string> = {
       burnout: "емоційне вигорання", aut_burnout: "аутистичне вигорання", depressive: "депресивний період",
-      anxious: "тривожний період", overload: "хронічне перевантаження",
+      anxious: "тривожний період", overload: "хронічне перевантаження", hypervigil: "постійна напруга, насторожі",
+      numb: "емоційне оніміння", exec: "важко почати будь-які справи", insomnia: "тривалі проблеми зі сном",
+      irritable: "дратівливий період", load: "тягне все на собі", uncertainty: "тривала невизначеність",
+      grief: "період горя чи втрати", pain: "тривалий біль або хвороба",
     };
     const EP: Record<string, string> = {
       shutdown: "шатдаун. Може не відповідати, одне тепле повідомлення без питань",
