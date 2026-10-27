@@ -49,7 +49,7 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
 - Password reset: «Забули пароль?» on the login screen → `resetPasswordForEmail` (redirect back to the site); the link
   (`type=recovery`, caught in `recovering` before supabase-js clears it, plus PASSWORD_RECOVERY event) opens the `#newpass`
   screen → `updateUser`. Settings → Пара has «Змінити пароль». Supabase's built-in mail only reaches project team members
-  (2/h), so the husband needs custom SMTP configured in Supabase → Authentication → SMTP.
+  (2/h); custom SMTP is configured in Supabase → Authentication → SMTP (see Ideas).
 - Own "що мені треба": `days.data.need = "own"` + `needText`; saved list in `private_items` id `needs_own`.
 - NEED "help" ("Мені зараз дуже важко") is urgent: red on the card, counts in `hardNow()`.
 - "Що може трохи допомогти" under the need chips (`HELP`, `helpLevel()`, `helpTags()`): opens by itself when the state is hard,
@@ -87,4 +87,4 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
 - Description of her typical week / recurring tasks (she plans to write a spec).
 - Her other cycles (she wants to track them too, to catch triggers) — reuse the retro/patterns approach.
 - Cycle ↔ episodes link in patterns (e.g. meltdowns by cycle day) — not done yet.
-- SMTP: for now her personal Gmail; later switch to a dedicated address or Brevo (sender «Наш звʼязок»).
+- SMTP is set up (her personal Gmail, app password, done 2026-10-27; reset tested OK). Later switch to a dedicated address or Brevo (sender «Наш звʼязок»).
