@@ -459,3 +459,4 @@ details.fold:not([open]){opacity:.9}
 .cycgroup{display:flex;flex-direction:column;gap:6px}
 .cycgroup.now>.sub::after{content:" · зараз орієнтовно ця фаза";text-transform:none;letter-spacing:0;font-weight:500;color:var(--accent)}
 #medsSec.top{order:-1}
+.err.ok{color:var(--ink)}

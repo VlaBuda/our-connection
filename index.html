@@ -21,7 +21,7 @@
     <h1 id="authTitle">Вхід</h1>
     <p id="authLead">Увійди, щоб бачити одне одного.</p>
     <div class="field"><label for="email">Пошта</label><input type="text" id="email" inputmode="email" autocomplete="email" required></div>
-    <div class="field"><label for="password">Пароль</label><input type="password" id="password" autocomplete="current-password" minlength="6" required></div>
+    <div class="field" id="passField"><label for="password">Пароль</label><input type="password" id="password" autocomplete="current-password" minlength="6" required></div>
     <div id="signupFields" hidden>
       <div class="field"><label for="name">Як тебе називати</label><input type="text" id="name" autocomplete="nickname" maxlength="30"></div>
       <div class="field"><label>Твій колір</label><div class="colors" id="colorPick"></div></div>
@@ -29,6 +29,19 @@
     <p class="err" id="authErr" role="alert"></p>
     <button class="btn" type="submit" id="authSubmit">Увійти</button>
     <button class="link" type="button" id="authToggle">Я тут вперше</button>
+    <button class="link" type="button" id="forgotBtn">Забули пароль?</button>
+  </form>
+</main>
+
+<main class="screen" id="newpass" hidden>
+  <form class="panel" id="newPassForm">
+    <h1>Новий пароль</h1>
+    <p>Придумай новий пароль. Старий більше не знадобиться.</p>
+    <div class="field"><label for="newPass1">Новий пароль</label><input type="password" id="newPass1" autocomplete="new-password" minlength="6" required></div>
+    <div class="field"><label for="newPass2">Ще раз</label><input type="password" id="newPass2" autocomplete="new-password" minlength="6" required></div>
+    <p class="err" id="newPassErr" role="alert"></p>
+    <button class="btn" type="submit">Зберегти пароль</button>
+    <button class="link" type="button" id="newPassCancel" hidden>Скасувати</button>
   </form>
 </main>
 
@@ -281,7 +294,7 @@
     <div class="setpane" data-setpane="cycle" hidden><div class="field" id="setCycle"></div></div>
     <div class="setpane" data-setpane="pair" hidden>
       <div class="field"><label>Пара</label><p class="hint" id="pairInfo"></p></div>
-      <div class="row"><button class="ghost" id="logout" type="button">Вийти з акаунта</button></div>
+      <div class="row"><button class="ghost" id="changePass" type="button">Змінити пароль</button><button class="ghost" id="logout" type="button">Вийти з акаунта</button></div>
     </div>
   </div>
 </dialog>

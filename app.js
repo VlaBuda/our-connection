@@ -1,5 +1,7 @@
 /* Наш звʼязок — app logic. Data lives in Supabase; see supabase/schema.sql. */
 const CFG = window.APP_CONFIG;
+// Opened from a "reset password" email: remember it before supabase-js reads and clears the link.
+let recovering = /type=recovery/.test(location.hash + location.search);
 const sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
 });
@@ -327,7 +329,7 @@ const $=id=>document.getElementById(id);
 const el=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e};
 const btn=(cls,text,onClick,label)=>{const b=el("button",cls,text);b.type="button";if(label)b.setAttribute("aria-label",label);b.addEventListener("click",onClick);return b};
 function ls(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||"null");localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}}
-function show(id){["loading","auth","pair","app"].forEach(x=>$(x).hidden=x!==id)}
+function show(id){["loading","auth","pair","app","newpass"].forEach(x=>$(x).hidden=x!==id)}
 function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms)}}
 function flash(b,text){if(!b)return;const old=b.dataset.label||b.textContent;b.dataset.label=old;b.textContent=text||"✓";b.classList.add("flash");setTimeout(()=>{b.textContent=old;b.classList.remove("flash")},1100)}
 
@@ -1698,8 +1700,9 @@ function renderPushBanner(){$("pushBanner").hidden=!pushSupported()||(pushSubscr
 
 /* ---------- auth & pairing ---------- */
 let signup=false,pickedColor="red";
+let forgot=false;
 function setAuthMode(s){
-  signup=s;$("signupFields").hidden=!s;$("authTitle").textContent=s?"Реєстрація":"Вхід";
+  signup=s;forgot=false;$("passField").hidden=false;$("password").required=true;$("forgotBtn").hidden=s;$("signupFields").hidden=!s;$("authTitle").textContent=s?"Реєстрація":"Вхід";
   $("authLead").textContent=s?"Створи акаунт. Потім зʼєднаєте пару кодом.":"Увійди, щоб бачити одне одного.";
   $("authSubmit").textContent=s?"Створити акаунт":"Увійти";$("authToggle").textContent=s?"У мене вже є акаунт":"Я тут вперше";
   $("password").autocomplete=s?"new-password":"current-password";$("authErr").textContent="";
@@ -1711,13 +1714,28 @@ function authError(e){
   if(/already registered/i.test(m))return "Така пошта вже зареєстрована. Спробуй увійти.";
   if(/Email not confirmed/i.test(m))return "Пошта ще не підтверджена. Перевір лист від Supabase.";
   if(/Password should be/i.test(m))return "Пароль має бути щонайменше 6 символів.";
-  if(/rate limit/i.test(m))return "Забагато спроб. Зачекай кілька хвилин.";
+  if(/rate limit|security purposes/i.test(m))return "Забагато спроб. Зачекай трохи і спробуй ще раз.";
+  if(/not authorized/i.test(m))return "Supabase поки не може надіслати лист на цю пошту: спершу треба налаштувати відправку листів (SMTP) у Supabase.";
+  if(/should be different/i.test(m))return "Новий пароль має відрізнятися від старого.";
   return "Не вийшло: "+m;
 }
-$("authToggle").addEventListener("click",()=>setAuthMode(!signup));
+$("authToggle").addEventListener("click",()=>setAuthMode(forgot?false:!signup));
+// Forgot password: only the e-mail field, then Supabase sends a link back here (type=recovery).
+$("forgotBtn").addEventListener("click",()=>{setAuthMode(false);forgot=true;$("passField").hidden=true;$("password").required=false;$("forgotBtn").hidden=true;
+  $("authTitle").textContent="Відновлення пароля";$("authLead").textContent="Напиши пошту, з якою реєструвався(лась). Прийде лист з посиланням, щоб задати новий пароль.";
+  $("authSubmit").textContent="Надіслати лист";$("authToggle").textContent="Згадав(ла), повернутись до входу";$("email").focus()});
 $("authForm").addEventListener("submit",async e=>{
-  e.preventDefault();$("authErr").textContent="";
+  e.preventDefault();$("authErr").textContent="";$("authErr").classList.remove("ok");
   const email=$("email").value.trim(),password=$("password").value;
+  if(forgot){
+    if(!email){$("authErr").textContent="Напиши пошту.";return}
+    const b=$("authSubmit");b.disabled=true;
+    const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+    b.disabled=false;
+    $("authErr").classList.toggle("ok",!error);
+    $("authErr").textContent=error?authError(error):"Лист надіслано на "+email+". Відкрий посилання з нього на цьому пристрої. Якщо листа немає кілька хвилин, глянь у «Спам».";
+    return;
+  }
   if(signup){
     const name=$("name").value.trim();
     if(!name){$("authErr").textContent="Напиши, як тебе називати.";return}
@@ -1902,7 +1920,26 @@ document.addEventListener("visibilitychange",()=>{
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 setAuthMode(false);
 let started=false;
+function openNewPass(fromSettings){
+  show("newpass");$("newPassErr").textContent="";$("newPass1").value="";$("newPass2").value="";
+  $("newPassCancel").hidden=!fromSettings;setTimeout(()=>$("newPass1").focus(),0);
+}
+$("newPassForm").addEventListener("submit",async e=>{
+  e.preventDefault();const a=$("newPass1").value,b=$("newPass2").value;
+  if(a.length<6){$("newPassErr").textContent="Пароль має бути щонайменше 6 символів.";return}
+  if(a!==b){$("newPassErr").textContent="Паролі не збігаються.";return}
+  const {error}=await sb.auth.updateUser({password:a});
+  if(error){$("newPassErr").textContent=authError(error);return}
+  recovering=false;history.replaceState(null,"",location.pathname);
+  const {data}=await sb.auth.getSession();
+  if(data&&data.session){if(!started){started=true;start(data.session)}else{show("app");$("sync").textContent="Пароль змінено ✓"}}
+  else show("auth");
+});
+$("newPassCancel").addEventListener("click",()=>show("app"));
+$("changePass").addEventListener("click",()=>{if($("settings").open)$("settings").close();openNewPass(true)});
 sb.auth.onAuthStateChange((ev,session)=>{
+  if(ev==="PASSWORD_RECOVERY")recovering=true;
+  if(session&&recovering){openNewPass(false);return}
   if(session&&!started){started=true;setTimeout(()=>start(session),0)}
   if(!session){started=false;uid=null;if(channel){sb.removeChannel(channel);channel=null}show("auth")}
 });

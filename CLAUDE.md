@@ -46,6 +46,10 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
   textbook phases; `cycPatterns()` shows what usually happens on this cycle day. Shared subset → `days.data.cycle`.
   Notify tick sends "скоро місячні" 2 days ahead (to partner only if share.forecast).
 - Meds: `private_items` "meds" {list:[{id,name,time}]}, ticks in `d_<date>.meds`; tick reminds within 45 min of time.
+- Password reset: «Забули пароль?» on the login screen → `resetPasswordForEmail` (redirect back to the site); the link
+  (`type=recovery`, caught in `recovering` before supabase-js clears it, plus PASSWORD_RECOVERY event) opens the `#newpass`
+  screen → `updateUser`. Settings → Пара has «Змінити пароль». Supabase's built-in mail only reaches project team members
+  (2/h), so the husband needs custom SMTP configured in Supabase → Authentication → SMTP.
 - Own "що мені треба": `days.data.need = "own"` + `needText`; saved list in `private_items` id `needs_own`.
 - NEED "help" ("Мені зараз дуже важко") is urgent: red on the card, counts in `hardNow()`.
 - "Що може трохи допомогти" under the need chips (`HELP`, `helpLevel()`, `helpTags()`): opens by itself when the state is hard,
