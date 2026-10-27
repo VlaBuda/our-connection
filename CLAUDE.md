@@ -87,3 +87,4 @@ Tone of all copy: warm, plain, no guilt, no streaks or penalties. Gender-neutral
 - Description of her typical week / recurring tasks (she plans to write a spec).
 - Her other cycles (she wants to track them too, to catch triggers) — reuse the retro/patterns approach.
 - Cycle ↔ episodes link in patterns (e.g. meltdowns by cycle day) — not done yet.
+- SMTP: for now her personal Gmail; later switch to a dedicated address or Brevo (sender «Наш звʼязок»).
